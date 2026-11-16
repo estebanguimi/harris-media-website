@@ -115,6 +115,17 @@
     });
   });
 
+  /* ---------- works: official players embedded in the cards ---------- */
+  document.querySelectorAll("iframe[data-embed-src]").forEach(function (f) {
+    var src = f.getAttribute("data-embed-src");
+    if (/facebook\.com\/plugins\//.test(src)) {
+      var w = Math.round(f.getBoundingClientRect().width) || 500;
+      src += "&width=" + Math.max(350, Math.min(750, w));
+    }
+    f.addEventListener("load", function () { f.parentNode.classList.add("embed-ready"); });
+    f.src = src;
+  });
+
   /* ---------- lightbox (works) ---------- */
   var lb = document.getElementById("lightbox");
   if (lb) {

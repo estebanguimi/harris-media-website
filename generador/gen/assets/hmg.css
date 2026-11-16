@@ -550,3 +550,18 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* discreet staff access (admin panel) */
 .staff-key { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 8px; vertical-align: middle; color: inherit; opacity: .22; transition: opacity .2s, color .2s; }
 .staff-key:hover, .staff-key:focus-visible { opacity: 1; color: var(--accent); }
+/* works: official embedded players (YouTube, Vimeo, Facebook, Instagram) play inside the card */
+.work.embed { cursor: default; }
+.work.embed .photo { background: #050505; overflow: hidden; }
+.work.embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; z-index: 1; }
+.work.embed-vertical .photo { aspect-ratio: 9 / 16; }
+.work.embed-post .photo { aspect-ratio: 10 / 17; background: #fff; }
+.work.embed-fbpost .photo { aspect-ratio: 10 / 14; background: #fff; }
+.work.embed-fbpost iframe { overflow: auto; }
+.embed-wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--accent); z-index: 0; }
+.embed-wait svg { width: 40px; height: 40px; animation: embedPulse 1.4s ease-in-out infinite; }
+@keyframes embedPulse { 50% { opacity: .35; transform: scale(.92); } }
+.embed-ready .embed-wait { display: none; }
+.works-grid { align-items: start; }
+.work.embed-fbpost .photo { aspect-ratio: 4 / 3; }
+.work.embed-fbpost iframe { left: 50%; width: min(500px, 100%); transform: translateX(-50%); }

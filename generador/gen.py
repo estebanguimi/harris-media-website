@@ -969,6 +969,14 @@ def build_works():
             media = f'<div class="work-ph ph-{plat}"><span>{PLATFORM_ICON.get(plat, "")}</span><b>{e(PLATFORM_NAME.get(plat, plat).upper())}</b><i>{e(w["title"])}</i></div>'
         lab = w['category'].upper()
         meta = ' · '.join(x for x in (w.get('client', ''), str(w.get('year', ''))) if x).upper()
+        if w.get('embed'):
+            kind = w.get('embed_kind') or 'video'
+            meta_e = ' · '.join(x for x in (w.get('client', ''), str(w.get('year', ''))) if x).upper()
+            cards.append(f'''<article class="panel work embed embed-{kind}{' wide' if kind in ('video', 'fbpost') else ''}" data-cat="{e(w['category'])}" data-reveal>
+  <div class="photo"><iframe data-embed-src="{e(w['embed'])}" title="{e(w['title'])}" loading="lazy" scrolling="{'yes' if kind == 'fbpost' else 'no'}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write; web-share" allowfullscreen></iframe><span class="embed-wait" aria-hidden="true">{PLATFORM_ICON.get(plat, '')}</span></div>
+  <div class="info"><span class="num">{i + 1:02d}</span><div><h3>{e(w['title'])}</h3>{f'<div class="meta" style="margin-top:4px">{e(meta_e)}</div>' if meta_e else ''}</div><span class="chip">{e(PLATFORM_NAME.get(plat, lab))}</span></div>
+</article>''')
+            continue
         cards.append(f'''<article class="panel work hover brackets{' wide' if is_vid else ''}" data-cat="{e(w['category'])}" data-work data-title="{e(w['title'])}" data-label="{e(lab)}"{f' data-video="{e(w["video"])}"' if w.get('video') else ''}{f' data-embed="{e(w["embed"])}" data-embed-kind="{e(w.get("embed_kind", "video"))}"' if w.get('embed') else ''} data-reveal>
   <div class="photo">{media}{play if is_vid and w.get('embed_kind') != 'post' else ''}</div>
   <div class="info"><span class="num">{i + 1:02d}</span><div><h3>{e(w['title'])}</h3>{f'<div class="meta" style="margin-top:4px">{e(meta)}</div>' if meta else ''}</div><span class="chip">{e(lab)}</span></div>

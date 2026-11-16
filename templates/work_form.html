@@ -16,9 +16,9 @@
         {% if w.video_url %}<p class="current">Enlace actual: <a href="{{ w.video_url }}" target="_blank" rel="noopener">{{ w.video_url }}</a></p>{% endif %}
         <label>Pega el enlace<input name="video_url" value="{{ w.video_url or '' }}" placeholder="https://www.facebook.com/…  ·  https://www.instagram.com/p/…  ·  https://youtu.be/…"></label>
         <div class="sources"><span>Facebook <small>video, reel o publicación</small></span><span>Instagram <small>publicación o reel</small></span><span>YouTube</span><span>Vimeo</span></div>
-        <p class="help">Copia el enlace desde el navegador o con el botón «Compartir → Copiar enlace». La publicación tiene que ser <b>pública</b>. Al hacer clic en el trabajo, se abre ahí mismo en la web.</p>
+        <p class="help">Copia el enlace desde el navegador o con el botón «Compartir → Copiar enlace». La publicación tiene que ser <b>pública</b>. En la web se verá con <b>su portada oficial</b> y al darle play se reproduce <b>dentro del recuadro</b>, sin salir de la página.</p>
       </fieldset>
-      {{ image_field('image', 'Imagen de portada', w.image, 'Se ve en la cuadrícula. Obligatoria si no pegas un enlace; si pegas uno y no subes imagen, se muestra una tarjeta con el logo de la red social.') }}
+      {{ image_field('image', 'Imagen de portada', w.image, 'Solo hace falta si NO pegas un enlace. Con enlace se usa la portada oficial de la publicación.') }}
       <fieldset class="box"><legend>O sube un archivo de video (opcional)</legend>
         {% if w.video %}<p class="current">Video actual: <a href="{{ media(w.video) }}" target="_blank" rel="noopener">ver archivo ↗</a></p>{% endif %}
         <label class="btn btn-ghost file">Subir archivo MP4<input type="file" name="video" accept="video/mp4,video/webm" data-filename></label>

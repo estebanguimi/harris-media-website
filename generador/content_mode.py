@@ -60,21 +60,22 @@ def news(c, drafts):
 
 
 def embed_info(u):
-    """Turns a public link into an embeddable player. Returns (embed_url, kind, platform) or ('', '', '').
-    kind: 'video' (16:9), 'vertical' (9:16 reels) or 'post' (social post card)."""
+    """Turns a public link into the platform's official embedded player (official cover + plays in place).
+    Returns (embed_url, kind, platform) or ('', '', ''). kind: 'video' (16:9), 'vertical' (9:16 reels/shorts),
+    'post' (Instagram post or reel card) or 'fbpost' (Facebook post card)."""
     from urllib.parse import quote
     u = (u or '').strip()
     if not re.match(r'^https?://', u):
         return '', '', ''
     m = re.search(r'(?:youtube\.com/(?:watch\?v=|embed/|live/)|youtu\.be/)([\w-]{6,})', u)
     if m:
-        return f'https://www.youtube-nocookie.com/embed/{m.group(1)}?autoplay=1&rel=0', 'video', 'youtube'
+        return f'https://www.youtube-nocookie.com/embed/{m.group(1)}?rel=0&modestbranding=1&playsinline=1', 'video', 'youtube'
     m = re.search(r'youtube\.com/shorts/([\w-]{6,})', u)
     if m:
-        return f'https://www.youtube-nocookie.com/embed/{m.group(1)}?autoplay=1&rel=0', 'vertical', 'youtube'
+        return f'https://www.youtube-nocookie.com/embed/{m.group(1)}?rel=0&modestbranding=1&playsinline=1', 'vertical', 'youtube'
     m = re.search(r'vimeo\.com/(?:video/)?(\d+)', u)
     if m:
-        return f'https://player.vimeo.com/video/{m.group(1)}?autoplay=1', 'video', 'vimeo'
+        return f'https://player.vimeo.com/video/{m.group(1)}?title=0&byline=0&portrait=0', 'video', 'vimeo'
     m = re.search(r'instagram\.com/(?:[\w.]+/)?(p|reel|reels|tv)/([\w-]+)', u)
     if m:
         kind = 'reel' if m.group(1) in ('reel', 'reels') else m.group(1)
@@ -82,10 +83,10 @@ def embed_info(u):
     if re.search(r'(?:facebook\.com|fb\.watch|fb\.com)', u):
         enc = quote(u, safe='')
         if re.search(r'facebook\.com/(?:reel/|share/r/)', u):
-            return f'https://www.facebook.com/plugins/video.php?href={enc}&show_text=false&autoplay=1', 'vertical', 'facebook'
+            return f'https://www.facebook.com/plugins/video.php?href={enc}&show_text=false', 'vertical', 'facebook'
         if re.search(r'fb\.watch/|facebook\.com/(?:watch|.*/videos/|video\.php|share/v/)', u):
-            return f'https://www.facebook.com/plugins/video.php?href={enc}&show_text=false&autoplay=1', 'video', 'facebook'
-        return f'https://www.facebook.com/plugins/post.php?href={enc}&show_text=true&width=500', 'post', 'facebook'
+            return f'https://www.facebook.com/plugins/video.php?href={enc}&show_text=false', 'video', 'facebook'
+        return f'https://www.facebook.com/plugins/post.php?href={enc}&show_text=true', 'fbpost', 'facebook'
     return '', '', ''
 
 
