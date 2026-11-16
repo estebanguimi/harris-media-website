@@ -71,6 +71,12 @@ new MutationObserver(sync).observe(rail,{subtree:true,attributes:true,attributeF
 [].forEach.call(arrows,function(a){a.addEventListener("click",function(){var k=cur()+parseInt(a.getAttribute("data-dir"),10);if(k>=0&&k<n)dots[k].click()})});
 sync()})();
 </script>'''
+lock = ('<a class="staff-key" href="admin" title="Acceso del equipo" aria-label="Acceso del equipo">'
+        '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></a>')
+cp = '<span class="">© 2026 HARRIS MEDIA GROUP</span>'
+assert s.count(cp) == 1, 'copyright not found'
+s = s.replace(cp, '<span class="">© 2026 HARRIS MEDIA GROUP' + lock + '</span>', 1)
+css = css.replace('</style>', '.staff-key{display:inline-grid;place-items:center;width:20px;height:20px;margin-left:8px;vertical-align:middle;color:inherit;opacity:.22;transition:opacity .2s,color .2s}.staff-key:hover,.staff-key:focus-visible{opacity:1;color:#FE572E}</style>')
 s = s.replace('</head>', css + '</head>', 1)
 s = s.replace('</body>', js + '</body>', 1)
 open(p, 'w', encoding='utf-8').write(s)
