@@ -129,17 +129,20 @@
   /* Instagram: show only the photo / video (hide Instagram's own header and footer) */
   (function () {
     var TOP = 54, BOTTOM = 154;
-    function fit(f, H) {
-      var box = f.parentNode, m = H - TOP - BOTTOM;
-      if (m < 40) return;
+    function apply(f) {
+      var r = f._igr, box = f.parentNode;
+      if (!r) return;
       if ((box.getAttribute("data-igfit") || "shape") === "shape") {
-        var W = box.clientWidth;
-        box.style.aspectRatio = W + " / " + m;
-        f.style.top = -TOP + "px"; f.style.height = H + "px";
+        var card = box.closest(".work");
+        if (card && r < 0.85) card.classList.add("wide");          /* horizontal video / photo: wide card */
+        box.style.aspectRatio = "1 / " + r.toFixed(4);
+        f.style.top = -TOP + "px"; f.style.height = "calc(100% + " + (TOP + BOTTOM) + "px)";
       } else {
-        var bw = box.clientWidth, bh = box.clientHeight, s = Math.max(bh / m, 1);
-        f.style.width = bw + "px"; f.style.height = H + "px"; f.style.transformOrigin = "0 0";
-        f.style.transform = "scale(" + s + ")"; f.style.left = (-(bw * s - bw) / 2) + "px"; f.style.top = (-TOP * s - (m * s - bh) / 2) + "px";
+        var tile = box.closest(".hw-tile");
+        if (tile && r < 0.85 && tile.classList.contains("hw-image")) { tile.classList.remove("hw-image"); tile.classList.add("hw-video"); }
+        var bw = box.clientWidth, bh = box.clientHeight, mm = r * bw, s = Math.max(bh / mm, 1);
+        f.style.width = bw + "px"; f.style.height = (mm + TOP + BOTTOM) + "px"; f.style.transformOrigin = "0 0";
+        f.style.transform = "scale(" + s + ")"; f.style.left = (-(bw * s - bw) / 2) + "px"; f.style.top = (-TOP * s - (mm * s - bh) / 2) + "px";
       }
       box.classList.add("ig-ready");
     }
@@ -149,7 +152,17 @@
       try { if (typeof d === "string") d = JSON.parse(d); } catch (x) { return; }
       if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;
       var frames = document.querySelectorAll("iframe[data-ig]");
-      for (var k = 0; k < frames.length; k++) if (frames[k].contentWindow === e.source) fit(frames[k], d.details.height);
+      for (var k = 0; k < frames.length; k++) {
+        var f = frames[k];
+        if (f.contentWindow !== e.source || !f.offsetWidth) continue;
+        var m = d.details.height - TOP - BOTTOM;
+        if (m > 40) { f._igr = m / f.offsetWidth; apply(f); }
+      }
+    });
+    var t;
+    window.addEventListener("resize", function () {
+      clearTimeout(t);
+      t = setTimeout(function () { var fr = document.querySelectorAll("iframe[data-ig]"); for (var k = 0; k < fr.length; k++) apply(fr[k]); }, 200);
     });
   })();
 
