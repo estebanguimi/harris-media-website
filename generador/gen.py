@@ -960,6 +960,7 @@ def build_works():
                  for i, (lab, cat) in enumerate(WORKS)]
     play = '<span class="play" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
     cards = []
+    uses_fb = uses_ig = False
     for i, w in enumerate(items):
         is_vid = bool(w.get('video') or w.get('embed'))
         plat = w.get('platform', '')
@@ -972,6 +973,21 @@ def build_works():
         if w.get('embed'):
             kind = w.get('embed_kind') or 'video'
             meta_e = ' · '.join(x for x in (w.get('client', ''), str(w.get('year', ''))) if x).upper()
+            if plat in ('facebook', 'instagram'):
+                # official SDK embeds: the platform sizes the player to the real video / post
+                if plat == 'facebook':
+                    cls = 'fb-post' if kind == 'fbpost' else 'fb-video'
+                    box = f'<div class="{cls}" data-href="{e(w["link"])}" data-width="auto" data-show-text="{"true" if kind == "fbpost" else "false"}" data-allowfullscreen="true"></div>'
+                    uses_fb = True
+                else:
+                    box = (f'<blockquote class="instagram-media" data-instgrm-permalink="{e(w["link"])}" data-instgrm-version="14">'
+                           f'<a href="{e(w["link"])}" target="_blank" rel="noopener">{e(w["title"])}</a></blockquote>')
+                    uses_ig = True
+                cards.append(f'''<article class="panel work embed embed-sdk embed-{plat}{' wide' if plat == 'instagram' or kind == 'fbpost' else ''}" data-cat="{e(w['category'])}" data-reveal>
+  <div class="photo">{box}<span class="embed-wait" aria-hidden="true">{PLATFORM_ICON.get(plat, '')}</span></div>
+  <div class="info"><span class="num">{i + 1:02d}</span><div><h3>{e(w['title'])}</h3>{f'<div class="meta" style="margin-top:4px">{e(meta_e)}</div>' if meta_e else ''}</div><span class="chip">{e(PLATFORM_NAME.get(plat, lab))}</span></div>
+</article>''')
+                continue
             cards.append(f'''<article class="panel work embed embed-{kind}{' wide' if kind in ('video', 'fbpost') else ''}" data-cat="{e(w['category'])}" data-reveal>
   <div class="photo"><iframe data-embed-src="{e(w['embed'])}" title="{e(w['title'])}" loading="lazy" scrolling="{'yes' if kind == 'fbpost' else 'no'}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; clipboard-write; web-share" allowfullscreen></iframe><span class="embed-wait" aria-hidden="true">{PLATFORM_ICON.get(plat, '')}</span></div>
   <div class="info"><span class="num">{i + 1:02d}</span><div><h3>{e(w['title'])}</h3>{f'<div class="meta" style="margin-top:4px">{e(meta_e)}</div>' if meta_e else ''}</div><span class="chip">{e(PLATFORM_NAME.get(plat, lab))}</span></div>
@@ -1000,6 +1016,10 @@ def build_works():
   <figure><div class="media"></div><figcaption><span class="cap-t"></span><span class="cap-c" style="color:#FE572E"></span></figcaption></figure>
   <button class="lb-btn next" aria-label="Next">›</button>
 </div>'''
+    if uses_fb:
+        lightbox += '<div id="fb-root"></div><script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v21.0"></script>'
+    if uses_ig:
+        lightbox += '<script async src="https://www.instagram.com/embed.js"></script>'
     page('our-works.html', 'Our Works | Harris Media Group', 'Selected work from Harris Media Group: video, social, creative and brand for campaigns, causes and advocacy.', 'works', body, extra=lightbox)
 
 

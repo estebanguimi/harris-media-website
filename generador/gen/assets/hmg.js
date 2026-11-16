@@ -126,6 +126,35 @@
     f.src = src;
   });
 
+  /* ---------- works: Facebook / Instagram official embeds ---------- */
+  var sdkCards = Array.prototype.slice.call(document.querySelectorAll(".work.embed-sdk"));
+  if (sdkCards.length) {
+    var fit = function () {
+      sdkCards.forEach(function (card) {
+        var f = card.querySelector("iframe");
+        if (!f || !f.offsetWidth || f.offsetHeight < 60) return;
+        card.querySelector(".photo").classList.add("embed-ready");
+        if (card.getAttribute("data-sized") || !card.classList.contains("embed-facebook")) return;
+        card.setAttribute("data-sized", "1");
+        var box = card.querySelector(".fb-video");
+        /* horizontal video in a narrow card: widen the card and let Facebook redraw it at the new size */
+        if (box && f.offsetHeight < f.offsetWidth * 0.9 && !card.classList.contains("wide")) {
+          card.classList.add("wide");
+          if (window.FB && FB.XFBML) {
+            box.removeAttribute("fb-xfbml-state"); box.removeAttribute("fb-iframe-plugin-query"); box.innerHTML = "";
+            FB.XFBML.parse(card);
+          }
+        }
+      });
+    };
+    var prevInit = window.fbAsyncInit;
+    window.fbAsyncInit = function () {
+      if (prevInit) prevInit();
+      if (window.FB && FB.Event) FB.Event.subscribe("xfbml.render", function () { setTimeout(fit, 400); });
+    };
+    var tries = 0, poll = setInterval(function () { fit(); if (++tries > 40) clearInterval(poll); }, 500);
+  }
+
   /* ---------- lightbox (works) ---------- */
   var lb = document.getElementById("lightbox");
   if (lb) {

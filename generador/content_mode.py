@@ -100,7 +100,8 @@ def works(c, drafts):
     for w in rows:
         emb, kind, plat = embed_info(w.get('video_url'))
         out.append(dict(title=w.get('title') or 'Untitled', client=w.get('client', ''), year=w.get('year', ''), category=w.get('category') or 'creative',
-                        image=w.get('image') or ('' if emb else PLACEHOLDER), video=w.get('video', ''), embed=emb, embed_kind=kind, platform=plat))
+                        image=w.get('image') or ('' if emb else PLACEHOLDER), video=w.get('video', ''), embed=emb, embed_kind=kind, platform=plat,
+                        link=(w.get('video_url') or '').strip()))
     return out
 
 

@@ -565,3 +565,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .works-grid { align-items: start; }
 .work.embed-fbpost .photo { aspect-ratio: 4 / 3; }
 .work.embed-fbpost iframe { left: 50%; width: min(500px, 100%); transform: translateX(-50%); }
+/* Facebook / Instagram official embeds: height follows the real video / post */
+.work.embed-sdk .photo { aspect-ratio: auto; min-height: 220px; display: flex; justify-content: center; align-items: flex-start; }
+.work.embed-sdk .photo > div, .work.embed-sdk .photo > blockquote, .work.embed-sdk .photo > iframe { position: relative; z-index: 1; width: 100%; }
+.work.embed-sdk .fb-video, .work.embed-sdk .fb-post { width: 100%; }
+.work.embed-sdk .fb-video span, .work.embed-sdk .fb-video iframe, .work.embed-sdk .fb-post span, .work.embed-sdk .fb-post iframe { width: 100% !important; }
+.work.embed-instagram .photo { background: #fff; padding: 0 12px; }
+.work.embed-instagram .instagram-media, .work.embed-instagram iframe.instagram-media { max-width: 440px !important; min-width: 0 !important; margin: 0 auto !important; border: 0 !important; box-shadow: none !important; }
+.work.embed-fbpost .photo, .work.embed-sdk.embed-facebook .photo:has(.fb-post) { background: #fff; }
+.work.embed-sdk .embed-wait { position: absolute; }
+.work.embed-sdk .photo.embed-ready { min-height: 0; }
