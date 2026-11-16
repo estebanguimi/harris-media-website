@@ -1,0 +1,9 @@
+Coloca aqui tus videos con estos nombres exactos:
+work-01.mp4 ... work-09.mp4
+
+Fila 1: work-01, work-02, work-03
+Fila 2: work-04, work-05, work-06
+Fila 3: work-07, work-08, work-09
+
+Formato recomendado: MP4 (H.264), 16:9, sin audio, 10-20 s, menos de 5 MB cada uno.
+Si un video falta, se muestra la imagen en su lugar.
