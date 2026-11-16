@@ -109,3 +109,86 @@ def copy_media(c, out):
     src = os.path.join(c, 'uploads')
     if os.path.isdir(src):
         shutil.copytree(src, os.path.join(out, 'media'), dirs_exist_ok=True)
+
+
+# ----------------------------------------------------------------------
+# Homepage "OUR WORKS" gallery wall, rebuilt from the panel's works
+# ----------------------------------------------------------------------
+PLAY = '<span class="hw-play" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+
+
+def _esc(s):
+    import html
+    return html.escape(str(s or ''), quote=True)
+
+
+def _tile(n, w):
+    """One gallery tile. Returns (html, is_wide)."""
+    from urllib.parse import quote
+    plat, kind, link = w.get('platform'), w.get('embed_kind'), w.get('link', '')
+    label = (w.get('category') or 'work').upper()
+    title = _esc(w.get('title'))
+    head = f'<a class="hw-tile hw-{{k}}" href="our-works.html" tabindex="-1" aria-label="{title}">'
+    tag = f'<span class="hw-tag">{n:02d} · {_esc(label)}</span></a>'
+    if plat == 'youtube':
+        vid = re.search(r'/embed/([\w-]+)', w['embed']).group(1)
+        img = (f'<img class="hw-img hw-cover" src="https://i.ytimg.com/vi/{vid}/maxresdefault.jpg" alt="" loading="lazy" '
+               f'onerror="this.onerror=null;this.src=\'https://i.ytimg.com/vi/{vid}/hqdefault.jpg\'">')
+        return head.format(k='video') + img + PLAY + tag, True
+    if plat == 'facebook':
+        src = f'https://www.facebook.com/plugins/video.php?href={quote(link, safe="")}&show_text=false&width=420'
+        if kind == 'fbpost':
+            src = f'https://www.facebook.com/plugins/post.php?href={quote(link, safe="")}&show_text=false&width=420'
+        frame = f'<iframe class="hw-embed" src="{_esc(src)}" loading="lazy" scrolling="no" tabindex="-1" title="{title}"></iframe>'
+        return head.format(k='video hw-social') + frame + tag, True
+    if plat == 'instagram':
+        frame = f'<iframe class="hw-embed hw-ig" src="{_esc(w["embed"])}" loading="lazy" scrolling="no" tabindex="-1" title="{title}"></iframe>'
+        return head.format(k='image hw-social') + frame + tag, False
+    if plat == 'vimeo':
+        src = w['embed'] + '&background=1&muted=1'
+        frame = f'<iframe class="hw-embed" src="{_esc(src)}" loading="lazy" tabindex="-1" title="{title}" allow="autoplay"></iframe>'
+        return head.format(k='video hw-social') + frame + tag, True
+    if w.get('video'):
+        poster = f' poster="{_esc(w["image"])}"' if w.get('image') else ''
+        media = (f'<img class="hw-img hw-cover" src="{_esc(w.get("image"))}" alt="" loading="lazy">' if w.get('image') else '') + \
+                f'<video class="hw-vid" muted loop playsinline autoplay preload="metadata"{poster}><source src="{_esc(w["video"])}"></video>'
+        return head.format(k='video') + media + PLAY + tag, True
+    img = f'<img class="hw-img hw-cover" src="{_esc(w.get("image"))}" alt="" loading="lazy">'
+    return head.format(k='image') + img + tag, False
+
+
+HW_CSS = '''<style id="hw-panel-css">
+#slide-works img.hw-cover{width:100%;height:100%;object-fit:cover;display:block}
+#slide-works .hw-embed{position:absolute;left:0;top:0;width:100%;height:100%;border:0;pointer-events:none;background:#000}
+#slide-works .hw-ig{height:calc(100% + 260px);top:-56px;background:#fff}
+#slide-works .hw-social::after{content:"";position:absolute;inset:0;z-index:1}
+#slide-works .hw-social .hw-play,#slide-works .hw-social .hw-tag{z-index:2}
+</style>'''
+
+
+def landing(c, drafts, gen_dir, out):
+    """Writes out/index.html: the built homepage with its gallery wall made from the panel's works."""
+    s = open(os.path.join(gen_dir, 'landing', 'index.html'), encoding='utf-8').read()
+    items = works(c, drafts)
+    try:
+        i0 = s.index('<div class="hw-wall my-auto">')
+        r3 = s.index('<div class="hw-row hw-row-3">', i0)
+        j = s.index('</div></div></div>', s.index('<div class="hw-set" aria-hidden="true">', r3)) + len('</div></div></div>')
+        assert s[j:j + 6] == '</div>'
+    except (ValueError, AssertionError):
+        items = []
+    if items:
+        rows = ''
+        k = 0
+        for r in range(3):
+            tiles = []
+            for p in range(6):
+                w = items[k % len(items)]
+                tiles.append(_tile(k % len(items) + 1, w)[0])
+                k += 1
+            seq = ''.join(tiles) * (2 if len(items) > 2 else 3)
+            rows += (f'<div class="hw-row hw-row-{r + 1}"><div class="hw-track">'
+                     f'<div class="hw-set">{seq}</div><div class="hw-set" aria-hidden="true">{seq}</div></div></div>')
+        s = s[:i0] + '<div class="hw-wall my-auto">' + rows + '</div>' + s[j + 6:]
+        s = s.replace('</head>', HW_CSS + '</head>', 1)
+    open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(s)

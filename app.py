@@ -166,7 +166,8 @@ def build(target, drafts=False):
             app.logger.error(r.stderr)
             raise RuntimeError(r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'error desconocido')
         landing = os.path.join(GEN, 'landing')
-        shutil.copy(os.path.join(landing, 'index.html'), os.path.join(tmp, 'index.html'))
+        if not os.path.exists(os.path.join(tmp, 'index.html')):  # the generator builds the homepage with the panel's works
+            shutil.copy(os.path.join(landing, 'index.html'), os.path.join(tmp, 'index.html'))
         if os.path.isdir(os.path.join(landing, 'videos')):
             shutil.copytree(os.path.join(landing, 'videos'), os.path.join(tmp, 'videos'), dirs_exist_ok=True)
         old = target + '.anterior'

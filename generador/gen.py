@@ -1031,4 +1031,5 @@ build_team(); build_profiles(); worlds.build(globals()); build_services(); build
 import sn; sn.build(globals())
 if CONTENT:
     CM.copy_media(CONTENT, OUT)
+    CM.landing(CONTENT, DRAFTS, HERE, OUT)
 print(len(PAGES), 'pages')
