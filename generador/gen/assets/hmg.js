@@ -126,6 +126,33 @@
     f.src = src;
   });
 
+  /* Instagram: show only the photo / video (hide Instagram's own header and footer) */
+  (function () {
+    var TOP = 54, BOTTOM = 154;
+    function fit(f, H) {
+      var box = f.parentNode, m = H - TOP - BOTTOM;
+      if (m < 40) return;
+      if ((box.getAttribute("data-igfit") || "shape") === "shape") {
+        var W = box.clientWidth;
+        box.style.aspectRatio = W + " / " + m;
+        f.style.top = -TOP + "px"; f.style.height = H + "px";
+      } else {
+        var bw = box.clientWidth, bh = box.clientHeight, s = Math.max(bh / m, 1);
+        f.style.width = bw + "px"; f.style.height = H + "px"; f.style.transformOrigin = "0 0";
+        f.style.transform = "scale(" + s + ")"; f.style.left = (-(bw * s - bw) / 2) + "px"; f.style.top = (-TOP * s - (m * s - bh) / 2) + "px";
+      }
+      box.classList.add("ig-ready");
+    }
+    window.addEventListener("message", function (e) {
+      if (e.origin !== "https://www.instagram.com") return;
+      var d = e.data;
+      try { if (typeof d === "string") d = JSON.parse(d); } catch (x) { return; }
+      if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;
+      var frames = document.querySelectorAll("iframe[data-ig]");
+      for (var k = 0; k < frames.length; k++) if (frames[k].contentWindow === e.source) fit(frames[k], d.details.height);
+    });
+  })();
+
   /* ---------- works: Facebook / Instagram official embeds ---------- */
   var sdkCards = Array.prototype.slice.call(document.querySelectorAll(".work.embed-sdk"));
   if (sdkCards.length) {

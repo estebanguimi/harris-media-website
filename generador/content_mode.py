@@ -142,7 +142,7 @@ def _tile(n, w):
         frame = f'<iframe class="hw-embed" src="{_esc(src)}" loading="lazy" scrolling="no" tabindex="-1" title="{title}"></iframe>'
         return head.format(k='video hw-social') + frame + tag, True
     if plat == 'instagram':
-        frame = f'<iframe class="hw-embed hw-ig" src="{_esc(w["embed"])}" loading="lazy" scrolling="no" tabindex="-1" title="{title}"></iframe>'
+        frame = f'<span class="hw-igbox" data-igfit="cover"><iframe class="hw-embed hw-ig" data-ig src="{_esc(w["embed"])}" loading="lazy" scrolling="no" tabindex="-1" title="{title}"></iframe></span>'
         return head.format(k='image hw-social') + frame + tag, False
     if plat == 'vimeo':
         src = w['embed'] + '&background=1&muted=1'
@@ -157,10 +157,14 @@ def _tile(n, w):
     return head.format(k='image') + img + tag, False
 
 
+IG_FIT_JS = '/* Instagram: show only the photo / video (hide Instagram\'s own header and footer) */\n(function () {\n  var TOP = 54, BOTTOM = 154;\n  function fit(f, H) {\n    var box = f.parentNode, m = H - TOP - BOTTOM;\n    if (m < 40) return;\n    if ((box.getAttribute("data-igfit") || "shape") === "shape") {\n      var W = box.clientWidth;\n      box.style.aspectRatio = W + " / " + m;\n      f.style.top = -TOP + "px"; f.style.height = H + "px";\n    } else {\n      var bw = box.clientWidth, bh = box.clientHeight, s = Math.max(bh / m, 1);\n      f.style.width = bw + "px"; f.style.height = H + "px"; f.style.transformOrigin = "0 0";\n      f.style.transform = "scale(" + s + ")"; f.style.left = (-(bw * s - bw) / 2) + "px"; f.style.top = (-TOP * s - (m * s - bh) / 2) + "px";\n    }\n    box.classList.add("ig-ready");\n  }\n  window.addEventListener("message", function (e) {\n    if (e.origin !== "https://www.instagram.com") return;\n    var d = e.data;\n    try { if (typeof d === "string") d = JSON.parse(d); } catch (x) { return; }\n    if (!d || d.type !== "MEASURE" || !d.details || !d.details.height) return;\n    var frames = document.querySelectorAll("iframe[data-ig]");\n    for (var k = 0; k < frames.length; k++) if (frames[k].contentWindow === e.source) fit(frames[k], d.details.height);\n  });\n})();\n'
+
+
 HW_CSS = '''<style id="hw-panel-css">
 #slide-works img.hw-cover{width:100%;height:100%;object-fit:cover;display:block}
 #slide-works .hw-embed{position:absolute;left:0;top:0;width:100%;height:100%;border:0;pointer-events:none;background:#000}
-#slide-works .hw-ig{height:calc(100% + 260px);top:-56px;background:#fff}
+#slide-works .hw-igbox{position:absolute;inset:0;overflow:hidden;background:#000}
+#slide-works .hw-ig{height:calc(100% + 208px);top:-54px;background:#000}
 #slide-works .hw-social::after{content:"";position:absolute;inset:0;z-index:1}
 #slide-works .hw-social .hw-play,#slide-works .hw-social .hw-tag{z-index:2}
 </style>'''
@@ -191,4 +195,6 @@ def landing(c, drafts, gen_dir, out):
                      f'<div class="hw-set">{seq}</div><div class="hw-set" aria-hidden="true">{seq}</div></div></div>')
         s = s[:i0] + '<div class="hw-wall my-auto">' + rows + '</div>' + s[j + 6:]
         s = s.replace('</head>', HW_CSS + '</head>', 1)
+        if 'data-ig ' in rows:
+            s = s.replace('</body>', '<script>' + IG_FIT_JS + '</script></body>', 1)
     open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(s)

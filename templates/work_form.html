@@ -17,7 +17,7 @@
         <label>Pega el enlace<input name="video_url" value="{{ w.video_url or '' }}" placeholder="https://www.facebook.com/…  ·  https://www.instagram.com/p/…  ·  https://youtu.be/…"></label>
         {% set pv = link_preview(w.video_url) if w.video_url else None %}
         {% if pv %}<div class="link-preview {{ 'is-ig' if pv.ig }}"><span class="muted">Así se verá en la web ({{ pv.plat }}):</span>
-          {% if pv.type == 'img' %}<img src="{{ pv.src }}" alt="">{% else %}<div class="lp-frame"><iframe class="{{ 'ig' if pv.ig }}" src="{{ pv.src }}" loading="lazy" scrolling="no" title="Vista previa" allow="autoplay; encrypted-media; fullscreen"></iframe></div>{% endif %}</div>
+          {% if pv.type == 'img' %}<img src="{{ pv.src }}" alt="">{% else %}<div class="lp-frame"{% if pv.ig %} data-igfit="shape"{% endif %}><iframe {% if pv.ig %}data-ig {% endif %}src="{{ pv.src }}" loading="lazy" scrolling="no" title="Vista previa" allow="autoplay; encrypted-media; fullscreen"></iframe></div>{% endif %}</div>
         {% elif w.video_url %}<p class="flash error" style="margin:0">Este enlace no se reconoce. Usa un enlace de YouTube, Vimeo, Facebook o Instagram.</p>{% endif %}
         <div class="sources"><span>Facebook <small>video, reel o publicación</small></span><span>Instagram <small>publicación o reel</small></span><span>YouTube</span><span>Vimeo</span></div>
         <p class="help">Copia el enlace desde el navegador o con el botón «Compartir → Copiar enlace». La publicación tiene que ser <b>pública</b>. En la web se verá con <b>su portada oficial</b> y al darle play se reproduce <b>dentro del recuadro</b>, sin salir de la página.</p>

@@ -575,3 +575,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .work.embed-fbpost .photo, .work.embed-sdk.embed-facebook .photo:has(.fb-post) { background: #fff; }
 .work.embed-sdk .embed-wait { position: absolute; }
 .work.embed-sdk .photo.embed-ready { min-height: 0; }
+/* Instagram: only the photo / video, cropped to its exact shape */
+.work.embed-ig .ig-box { position: relative; overflow: hidden; aspect-ratio: 4 / 5; background: #050505; transition: aspect-ratio .3s; }
+.work.embed-ig iframe[data-ig] { position: absolute; left: 0; top: -54px; width: 100%; height: calc(100% + 208px); border: 0; z-index: 1; background: #000; }
+.work.embed-ig .ig-ready .embed-wait { display: none; }

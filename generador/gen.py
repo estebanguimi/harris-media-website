@@ -973,6 +973,12 @@ def build_works():
         if w.get('embed'):
             kind = w.get('embed_kind') or 'video'
             meta_e = ' · '.join(x for x in (w.get('client', ''), str(w.get('year', ''))) if x).upper()
+            if plat == 'instagram':
+                cards.append(f'''<article class="panel work embed embed-ig" data-cat="{e(w['category'])}" data-reveal>
+  <div class="photo ig-box" data-igfit="shape"><iframe data-ig src="{e(w['embed'])}" title="{e(w['title'])}" loading="lazy" scrolling="no" allow="autoplay; encrypted-media; fullscreen; picture-in-picture"></iframe><span class="embed-wait" aria-hidden="true">{PLATFORM_ICON.get(plat, '')}</span></div>
+  <div class="info"><span class="num">{i + 1:02d}</span><div><h3>{e(w['title'])}</h3>{f'<div class="meta" style="margin-top:4px">{e(meta_e)}</div>' if meta_e else ''}</div><span class="chip">{e(PLATFORM_NAME.get(plat, lab))}</span></div>
+</article>''')
+                continue
             if plat in ('facebook', 'instagram'):
                 # official SDK embeds: the platform sizes the player to the real video / post
                 if plat == 'facebook':

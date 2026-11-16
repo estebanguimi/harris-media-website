@@ -7,7 +7,8 @@
   {% set pv = link_preview(w.video_url) if w.video_url else None %}
   <a class="tile-img" href="{{ url_for('work_edit', wid=w.id) }}">
     {% if pv and pv.type == 'img' %}<img src="{{ pv.src }}" alt="" loading="lazy">
-    {% elif pv %}<iframe class="{{ 'ig' if pv.ig }}" src="{{ pv.src }}" loading="lazy" scrolling="no" tabindex="-1" title="{{ w.title }}"></iframe>
+    {% elif pv and pv.ig %}<span class="ig-thumb" data-igfit="cover"><iframe data-ig src="{{ pv.src }}" loading="lazy" scrolling="no" tabindex="-1" title="{{ w.title }}"></iframe></span>
+    {% elif pv %}<iframe src="{{ pv.src }}" loading="lazy" scrolling="no" tabindex="-1" title="{{ w.title }}"></iframe>
     {% elif w.image %}<img src="{{ media(w.image) }}" alt="" loading="lazy">
     {% else %}<span class="tile-ph">Sin portada</span>{% endif %}
     {% if pv %}<span class="play">{{ '◆ Publicación' if pv.kind in ('post', 'fbpost') else '▶ Video' }} · {{ pv.plat }}</span>

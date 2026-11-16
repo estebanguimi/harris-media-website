@@ -160,3 +160,7 @@ legend { font-weight: 700; padding: 0 6px; }
 .lp-frame { position: relative; width: 100%; max-width: 520px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; }
 .lp-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .is-ig .lp-frame { aspect-ratio: 4 / 5.6; max-width: 360px; background: #fff; }
+.ig-thumb { position: absolute; inset: 0; overflow: hidden; background: #000; }
+.ig-thumb iframe, .lp-frame iframe[data-ig] { position: absolute; left: 0; top: -54px; width: 100%; height: calc(100% + 208px); border: 0; pointer-events: none; background: #000; }
+.lp-frame iframe[data-ig] { pointer-events: auto; }
+.is-ig .lp-frame { aspect-ratio: 4 / 5; max-width: 360px; background: #000; }
