@@ -164,3 +164,4 @@ legend { font-weight: 700; padding: 0 6px; }
 .ig-thumb iframe, .lp-frame iframe[data-ig] { position: absolute; left: 0; top: -54px; width: 100%; height: calc(100% + 208px); border: 0; pointer-events: none; background: #000; }
 .lp-frame iframe[data-ig] { pointer-events: auto; }
 .is-ig .lp-frame { aspect-ratio: 4 / 5; max-width: 360px; background: #000; }
+.dl { display: grid; gap: 6px; margin-top: 16px; } .dl .btn { justify-self: start; }

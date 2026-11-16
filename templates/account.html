@@ -14,5 +14,17 @@
       <label>Username<input name="username" required></label><label>Password <small>(at least 8 characters)</small><input type="password" name="password" minlength="8" required autocomplete="new-password"></label>
       <button class="btn btn-ghost" type="submit">Create user</button></form>
   </div>
+  <div class="card">
+    <h2>Downloads</h2>
+    <p class="help">Download a copy of the website at any time.</p>
+    <div class="dl">
+      <a class="btn btn-hot" href="{{ url_for('download', what='website') }}">⬇ Download website (ZIP)</a>
+      <p class="help">The complete published website (all pages, images and styles), ready to upload to any web host. It contains what is live right now — press <b>Publish changes</b> first if you have pending changes.</p>
+    </div>
+    <div class="dl">
+      <a class="btn btn-ghost" href="{{ url_for('download', what='backup') }}">⬇ Download content backup (ZIP)</a>
+      <p class="help">All the content managed in this panel (works, news, team, uploaded photos and videos). Keep it as a backup. Passwords are never included.</p>
+    </div>
+  </div>
 </div>
 {% endblock %}

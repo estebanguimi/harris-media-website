@@ -20,7 +20,7 @@ import uuid
 from datetime import date, datetime
 from functools import wraps
 
-from flask import (Flask, abort, flash, jsonify, redirect, render_template, request, send_from_directory, session, url_for)
+from flask import (Flask, abort, flash, jsonify, redirect, render_template, request, send_file, send_from_directory, session, url_for)
 from PIL import Image, ImageOps
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -338,6 +338,29 @@ def account():
                 flash(f'User "{u}" removed.', 'ok')
         return redirect(url_for('account'))
     return render_template('account.html', users=us)
+
+
+@app.route('/admin/download/<any(website,backup):what>')
+@login_required
+def download(what):
+    """website: the published site, ready to upload to any web host.
+    backup: the panel content (texts, photos, videos) without passwords."""
+    import io
+    import zipfile
+    root, prefix = (PUBLIC, 'hmg-website/') if what == 'website' else (DATA, 'hmg-content-backup/')
+    if not os.path.isdir(root):
+        abort(404)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:
+        for dp, dn, fn in os.walk(root):
+            dn[:] = [d for d in dn if not d.startswith('.')]
+            for f in fn:
+                if what == 'backup' and (f.startswith('.') or f == 'users.json' or f.endswith('.tmp')):
+                    continue  # never put passwords or the session key in a download
+                full = os.path.join(dp, f)
+                z.write(full, prefix + os.path.relpath(full, root).replace(os.sep, '/'))
+    buf.seek(0)
+    return send_file(buf, mimetype='application/zip', as_attachment=True, download_name=f'hmg-{what}-{date.today().isoformat()}.zip')
 
 
 # ======================================================================
