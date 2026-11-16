@@ -151,3 +151,12 @@ legend { font-weight: 700; padding: 0 6px; }
 .tile-ph { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(circle at 30% 20%, rgba(254,87,46,.3), transparent 60%), #111; color: var(--hot); font-weight: 800; letter-spacing: .14em; text-transform: uppercase; font-size: .8rem; }
 .tile-img { overflow: hidden; } .tile-img img { position: absolute; inset: 0; }
 .tile-b .badge { align-self: start; line-height: 1.4; }
+/* official cover of linked works (same as on the website) */
+.tile-img iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; background: #000; }
+.tile-img iframe.ig { height: calc(100% + 260px); top: -56px; background: #fff; }
+.tile-img .play { z-index: 2; }
+.link-preview { display: grid; gap: 8px; }
+.link-preview img { width: 100%; max-width: 520px; border-radius: 8px; }
+.lp-frame { position: relative; width: 100%; max-width: 520px; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; }
+.lp-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.is-ig .lp-frame { aspect-ratio: 4 / 5.6; max-width: 360px; background: #fff; }

@@ -407,6 +407,29 @@ def after_save(page, back):
 # ======================================================================
 # OUR WORKS
 # ======================================================================
+def link_preview(url):
+    """Official cover of a YouTube / Vimeo / Facebook / Instagram link, as shown on the website."""
+    import content_mode
+    from urllib.parse import quote
+    emb, kind, plat = content_mode.embed_info(url)
+    if not emb:
+        return None
+    label = {'youtube': 'YouTube', 'vimeo': 'Vimeo', 'facebook': 'Facebook', 'instagram': 'Instagram'}[plat]
+    if plat == 'youtube':
+        vid = re.search(r'/embed/([\w-]+)', emb).group(1)
+        return dict(type='img', src=f'https://i.ytimg.com/vi/{vid}/hqdefault.jpg', plat=label, kind=kind)
+    if plat == 'facebook':
+        what = 'post' if kind == 'fbpost' else 'video'
+        return dict(type='frame', src=f'https://www.facebook.com/plugins/{what}.php?href={quote(url.strip(), safe="")}&show_text=false&width=500',
+                    plat=label, kind=kind)
+    return dict(type='frame', src=emb, plat=label, kind=kind, ig=plat == 'instagram')
+
+
+@app.context_processor
+def preview_helper():
+    return dict(link_preview=link_preview)
+
+
 @app.route('/admin/trabajos')
 @login_required
 def works_list():
