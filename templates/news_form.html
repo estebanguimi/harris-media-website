@@ -1,28 +1,28 @@
 {% extends 'base.html' %}{% from '_macros.html' import status, actions, image_field, editor with context %}
-{% block title %}{{ n.title or 'Nueva noticia' }}{% endblock %}{% block body %}
+{% block title %}{{ n.title or 'New story' }}{% endblock %}{% block body %}
 <a class="back" href="{{ url_for('news_list') }}">← News</a>
-<h1>{{ n.title if n.slug else 'Escribir una noticia' }}</h1>
-{% if n.slug %}<p class="help">Dirección en la web: <code>blog-{{ n.slug }}.html</code></p>{% endif %}
+<h1>{{ n.title if n.slug else 'Write a story' }}</h1>
+{% if n.slug %}<p class="help">Web address: <code>blog-{{ n.slug }}.html</code></p>{% endif %}
 <form method="post" enctype="multipart/form-data" class="form" data-busy-upload>
   <input type="hidden" name="_csrf" value="{{ csrf }}">
   <div class="grid2">
     <div class="col">
-      <label>Título <em>*</em><input name="title" value="{{ n.title or '' }}" required class="big-input" placeholder="Titular de la noticia"></label>
+      <label>Title <em>*</em><input name="title" value="{{ n.title or '' }}" required class="big-input" placeholder="Headline of the story"></label>
       <div class="row3">
-        <label>Categoría<input name="category" value="{{ n.category or '' }}" list="cats" placeholder="Ej.: Press Releases"><datalist id="cats">{% for c in cats %}<option value="{{ c }}">{% endfor %}</datalist></label>
-        <label>Fecha<input type="date" name="date" value="{{ n.date or '' }}"></label>
+        <label>Category<input name="category" value="{{ n.category or '' }}" list="cats" placeholder="e.g. Press Releases"><datalist id="cats">{% for c in cats %}<option value="{{ c }}">{% endfor %}</datalist></label>
+        <label>Date<input type="date" name="date" value="{{ n.date or '' }}"></label>
       </div>
-      <div class="field"><span class="lab">Texto de la noticia <em>*</em></span>{{ editor('body', n.body, 'Escribe o pega aquí el texto…') }}
-        <p class="help">Puedes pegar el texto desde Word o Google Docs: se limpia solo. Usa «Subtítulo» para separar secciones.</p></div>
-      <label>Resumen <small>(opcional — se ve en la portada de News; si lo dejas vacío se usa el inicio del texto)</small><textarea name="excerpt" rows="3">{{ n.excerpt or '' }}</textarea></label>
+      <div class="field"><span class="lab">Story text <em>*</em></span>{{ editor('body', n.body, 'Type or paste the text here…') }}
+        <p class="help">You can paste text from Word or Google Docs: it is cleaned up automatically. Use "Subheading" to split it into sections.</p></div>
+      <label>Summary <small>(optional — shown on the News page; if empty, the beginning of the text is used)</small><textarea name="excerpt" rows="3">{{ n.excerpt or '' }}</textarea></label>
     </div>
     <div class="col side-col">
       {{ status(n) }}
-      {{ image_field('image', 'Imagen', n.image, 'Se ve en la portada de News y arriba de la noticia.') }}
-      {% if n.image %}<label class="check"><input type="checkbox" name="quitar_imagen" value="1"> Quitar la imagen</label>{% endif %}
-      <label>¿Cómo mostrar la imagen?<select name="fit">{% for k, t in fits %}<option value="{{ k }}" {{ 'selected' if n.fit == k }}>{{ t }}</option>{% endfor %}</select></label>
-      <label>Descripción de la imagen <small>(para accesibilidad)</small><input name="image_alt" value="{{ n.image_alt or '' }}" placeholder="Ej.: Vincent Harris en Augusta"></label>
-      <label>Etiqueta sobre la imagen <small>(solo si es la noticia principal)</small><input name="lead_tag" value="{{ n.lead_tag or '' }}" placeholder="Ej.: New office · Augusta, Maine"></label>
+      {{ image_field('image', 'Image', n.image, 'Shown on the News page and at the top of the story.') }}
+      {% if n.image %}<label class="check"><input type="checkbox" name="remove_image" value="1"> Remove the image</label>{% endif %}
+      <label>How should the image be shown?<select name="fit">{% for k, t in fits %}<option value="{{ k }}" {{ 'selected' if n.fit == k }}>{{ t }}</option>{% endfor %}</select></label>
+      <label>Image description <small>(for accessibility)</small><input name="image_alt" value="{{ n.image_alt or '' }}" placeholder="e.g. Vincent Harris in Augusta"></label>
+      <label>Label on the image <small>(only shown on the lead story)</small><input name="lead_tag" value="{{ n.lead_tag or '' }}" placeholder="e.g. New office · Augusta, Maine"></label>
     </div>
   </div>
   {{ actions(url_for('news_list'), url_for('news_delete', slug=n.slug) if n.slug else None, n.title) }}

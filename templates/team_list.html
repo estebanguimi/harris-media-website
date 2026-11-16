@@ -1,16 +1,16 @@
 {% extends 'base.html' %}{% block title %}Our Team{% endblock %}{% block body %}
-<div class="head"><div><h1>Our Team</h1><p class="help">Cada persona tiene su propia página de perfil. El orden de aquí es el orden de la web.</p></div>
-<a class="btn btn-hot" href="{{ url_for('team_edit') }}">＋ Añadir persona</a></div>
+<div class="head"><div><h1>Our Team</h1><p class="help">Each person has their own profile page. The order here is the order on the website.</p></div>
+<a class="btn btn-hot" href="{{ url_for('team_edit') }}">＋ Add a person</a></div>
 <div class="people">
 {% for m in items %}
 <article class="person" id="{{ m.slug }}">
   <a href="{{ url_for('team_edit', slug=m.slug) }}" class="person-img"><img src="{{ media(m.photo) }}" alt="" loading="lazy"></a>
   <div class="person-b"><b>{{ m.name }}</b><span class="muted">{{ m.title }}</span>
-    <span><span class="badge {{ m.status }}">{{ 'Publicado' if m.status == 'published' else 'Borrador' }}</span>{% if m.leader %} <span class="badge lead">Liderazgo</span>{% endif %}</span></div>
+    <span><span class="badge {{ m.status }}">{{ 'Published' if m.status == 'published' else 'Draft' }}</span>{% if m.leader %} <span class="badge lead">Leadership</span>{% endif %}</span></div>
   <div class="tile-f">
-    <form method="post" action="{{ url_for('team_move', slug=m.slug, d='arriba') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="ico" title="Mover antes" {{ 'disabled' if loop.first }}>↑</button></form>
-    <form method="post" action="{{ url_for('team_move', slug=m.slug, d='abajo') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="ico" title="Mover después" {{ 'disabled' if loop.last }}>↓</button></form>
-    <a class="btn btn-ghost sm" href="{{ url_for('team_edit', slug=m.slug) }}">Editar</a>
+    <form method="post" action="{{ url_for('team_move', slug=m.slug, d='up') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="ico" title="Move earlier" {{ 'disabled' if loop.first }}>↑</button></form>
+    <form method="post" action="{{ url_for('team_move', slug=m.slug, d='down') }}"><input type="hidden" name="_csrf" value="{{ csrf }}"><button class="ico" title="Move later" {{ 'disabled' if loop.last }}>↓</button></form>
+    <a class="btn btn-ghost sm" href="{{ url_for('team_edit', slug=m.slug) }}">Edit</a>
   </div>
 </article>
 {% endfor %}

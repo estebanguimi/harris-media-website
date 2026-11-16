@@ -1,11 +1,11 @@
-/* Panel HMG: editor de texto, vistas previas de imágenes, confirmaciones y avisos de carga. */
+/* HMG panel: text editor, image previews, confirmations and progress messages. */
 (function () {
   "use strict";
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
   function busy(msg) {
     var o = document.createElement("div"); o.className = "busy-overlay"; o.innerHTML = "<span></span>";
-    o.firstChild.appendChild(document.createTextNode(msg || "Guardando…")); document.body.appendChild(o);
+    o.firstChild.appendChild(document.createTextNode(msg || "Saving…")); document.body.appendChild(o);
   }
 
   /* confirmations */
@@ -18,7 +18,7 @@
   $$("form[data-busy-upload]").forEach(function (f) {
     f.addEventListener("submit", function (e) {
       var btn = e.submitter, hasVideo = $$('input[type=file][name=video]', f).some(function (i) { return i.files.length; });
-      busy(btn && btn.getAttribute("data-busy") ? btn.getAttribute("data-busy") : hasVideo ? "Subiendo video… (puede tardar un poco, no cierres la página)" : "Guardando…");
+      busy(btn && btn.getAttribute("data-busy") ? btn.getAttribute("data-busy") : hasVideo ? "Uploading video… (this can take a while, do not close the page)" : "Saving…");
     });
   });
 
@@ -74,16 +74,16 @@
       else if (c === "quote") document.execCommand("formatBlock", false, "blockquote");
       else if (c === "clear") { document.execCommand("removeFormat"); document.execCommand("formatBlock", false, "p"); document.execCommand("unlink"); }
       else if (c === "link") {
-        var u = prompt("Pega la dirección del enlace (por ejemplo https://…):", "https://");
+        var u = prompt("Paste the link address (for example https://…):", "https://");
         if (u && u !== "https://") document.execCommand("createLink", false, u);
       } else if (c === "image") {
         var sel = window.getSelection(), range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
         var fi = document.createElement("input"); fi.type = "file"; fi.accept = "image/*";
         fi.onchange = function () {
           if (!fi.files[0]) return;
-          var fd = new FormData(); fd.append("archivo", fi.files[0]); fd.append("_csrf", window.CSRF);
-          busy("Subiendo imagen…");
-          fetch("/admin/subir-imagen", { method: "POST", body: fd, headers: { "X-CSRF": window.CSRF } })
+          var fd = new FormData(); fd.append("file", fi.files[0]); fd.append("_csrf", window.CSRF);
+          busy("Uploading image…");
+          fetch("/admin/upload-image", { method: "POST", body: fd, headers: { "X-CSRF": window.CSRF } })
             .then(function (r) { return r.json(); })
             .then(function (j) {
               document.querySelector(".busy-overlay").remove();
@@ -91,7 +91,7 @@
               area.focus(); if (range) { sel.removeAllRanges(); sel.addRange(range); }
               document.execCommand("insertHTML", false, '<figure><img src="/' + j.url + '" alt=""></figure><p><br></p>');
             })
-            .catch(function () { document.querySelector(".busy-overlay").remove(); alert("No se pudo subir la imagen."); });
+            .catch(function () { document.querySelector(".busy-overlay").remove(); alert("The image could not be uploaded."); });
         };
         fi.click();
       }

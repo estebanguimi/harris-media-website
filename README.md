@@ -1,31 +1,32 @@
-# Harris Media Group — sitio web + panel de administración
+# Harris Media Group — website + admin panel
 
-El sitio web completo de Harris Media Group y un panel sencillo (tipo WordPress) para editarlo sin programar.
+The complete Harris Media Group website and a simple admin panel (WordPress-style, but much simpler) to update it without any coding.
 
-- **La web:** portada, Our Clients (con las 15 páginas de clientes), Our Services, Our Works, Our Team (con un perfil por persona), Careers, News y Contact.
-- **El panel (`/admin`):** subir fotos y videos a **Our Works**, incluidos enlaces de YouTube, Vimeo, Facebook e Instagram. También escribir y publicar **News** y crear o editar perfiles de **Our Team**.
+- **Website:** homepage, Our Clients (with 15 client pages), Our Services, Our Works, Our Team (one profile per person), Careers, News and Contact.
+- **Admin panel (`/admin`):** add photos, videos and links (YouTube, Vimeo, Facebook, Instagram) to **Our Works**, write and publish **News**, and create or edit **Our Team** profiles.
 
-## Cómo usarlo
+## How to use it
 
-👉 **Instrucciones paso a paso en [LEEME.md](LEEME.md)**: cómo abrirlo en tu computadora, cómo se usa el panel, copias de seguridad y cómo ponerlo en internet.
+👉 **Step-by-step instructions in [GUIDE.md](GUIDE.md)**: running it on your computer, using the panel, backups and putting it online.
 
-Inicio rápido:
+Quick start:
 
-| Sistema | Qué hacer |
+| Where | What to do |
 |---|---|
-| Windows | Instala Python 3.11 o más reciente y haz doble clic en `Iniciar (Windows).bat` |
-| Mac | Haz doble clic en `Iniciar (Mac).command` |
-| **En internet (gratis)** | Sigue [desplegar/PYTHONANYWHERE.md](desplegar/PYTHONANYWHERE.md): web + panel en un link propio |
-| Servidor propio | `docker build -t hmg-web .` y luego `docker run -d -p 8000:8000 -v hmg-datos:/datos hmg-web` |
+| Windows | Install Python 3.11 or newer and double-click `Start (Windows).bat` |
+| Mac | Double-click `Start (Mac).command` |
+| **Online (free)** | Follow [deploy/PYTHONANYWHERE.md](deploy/PYTHONANYWHERE.md): website + panel on your own link |
+| Your own server | `docker build -t hmg-web .` then `docker run -d -p 8000:8000 -v hmg-data:/data hmg-web` |
 
-La web queda en `http://localhost:8000/` y el panel en `http://localhost:8000/admin`.
+The website runs at `http://localhost:8000/` and the panel at `http://localhost:8000/admin` (or the small lock next to the © in the footer).
 
-## Estructura
+## Structure
 
-| Carpeta | Contenido |
+| Folder | Contents |
 |---|---|
-| `app.py`, `templates/`, `static/` | El panel de administración (Flask). |
-| `generador/` | El código que construye la web: diseño, animaciones y páginas. El panel lo ejecuta al pulsar «Publicar cambios». |
-| `generador/landing/index.html` | La portada, ya construida. |
-| `desarrollo/portada/` | Solo para cambiar el diseño de la portada: `reconstruir_portada.sh` la regenera desde `portada-original.html` (necesita Node.js). |
-| `contenido/` *(no está en el repositorio)* | Lo que se crea desde el panel: textos, fotos, videos y usuarios. Se genera sola la primera vez y **no se sube a GitHub** porque contiene las contraseñas. |
+| `app.py`, `templates/`, `static/` | The admin panel (Flask). |
+| `generator/` | The code that builds the website: design, animations and pages. The panel runs it when you press "Publish changes". |
+| `generator/landing/index.html` | The homepage, already built. |
+| `deploy/` | One-command installer for PythonAnywhere. |
+| `development/homepage/` | Only to change the homepage design: `rebuild_homepage.sh` rebuilds it from `homepage-original.html` (requires Node.js). |
+| `content/` *(not in the repository)* | Everything created in the panel: texts, photos, videos and users. Created automatically on first start and **never uploaded to GitHub** because it contains the passwords. |

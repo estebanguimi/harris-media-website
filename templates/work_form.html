@@ -1,33 +1,33 @@
 {% extends 'base.html' %}{% from '_macros.html' import status, actions, image_field with context %}
-{% block title %}{{ w.title or 'Nuevo trabajo' }}{% endblock %}{% block body %}
+{% block title %}{{ w.title or 'New work' }}{% endblock %}{% block body %}
 <a class="back" href="{{ url_for('works_list') }}">← Our Works</a>
-<h1>{{ w.title if w.id else 'Subir un trabajo' }}</h1>
+<h1>{{ w.title if w.id else 'Add a work' }}</h1>
 <form method="post" enctype="multipart/form-data" class="form" data-busy-upload>
   <input type="hidden" name="_csrf" value="{{ csrf }}">
   <div class="grid2">
     <div class="col">
-      <label>Título del trabajo <em>*</em><input name="title" value="{{ w.title or '' }}" required placeholder="Ej.: Spot «Back the Blue»"></label>
+      <label>Work title <em>*</em><input name="title" value="{{ w.title or '' }}" required placeholder="e.g. &quot;Back the Blue&quot; TV spot"></label>
       <div class="row3">
-        <label>Cliente<input name="client" value="{{ w.client or '' }}" placeholder="Ej.: Ted Cruz"></label>
-        <label>Año<input name="year" value="{{ w.year or '' }}" inputmode="numeric" maxlength="4"></label>
-        <label>Tipo<select name="category">{% for k, t in cats %}<option value="{{ k }}" {{ 'selected' if w.category == k }}>{{ t }}</option>{% endfor %}</select></label>
+        <label>Client<input name="client" value="{{ w.client or '' }}" placeholder="e.g. Ted Cruz"></label>
+        <label>Year<input name="year" value="{{ w.year or '' }}" inputmode="numeric" maxlength="4"></label>
+        <label>Type<select name="category">{% for k, t in cats %}<option value="{{ k }}" {{ 'selected' if w.category == k }}>{{ t }}</option>{% endfor %}</select></label>
       </div>
-      <fieldset class="box"><legend>Enlace de video o publicación (opcional)</legend>
-        {% if w.video_url %}<p class="current">Enlace actual: <a href="{{ w.video_url }}" target="_blank" rel="noopener">{{ w.video_url }}</a></p>{% endif %}
-        <label>Pega el enlace<input name="video_url" value="{{ w.video_url or '' }}" placeholder="https://www.facebook.com/…  ·  https://www.instagram.com/p/…  ·  https://youtu.be/…"></label>
+      <fieldset class="box"><legend>Video or post link (optional)</legend>
+        {% if w.video_url %}<p class="current">Current link: <a href="{{ w.video_url }}" target="_blank" rel="noopener">{{ w.video_url }}</a></p>{% endif %}
+        <label>Paste the link<input name="video_url" value="{{ w.video_url or '' }}" placeholder="https://www.facebook.com/…  ·  https://www.instagram.com/p/…  ·  https://youtu.be/…"></label>
         {% set pv = link_preview(w.video_url) if w.video_url else None %}
-        {% if pv %}<div class="link-preview {{ 'is-ig' if pv.ig }}"><span class="muted">Así se verá en la web ({{ pv.plat }}):</span>
-          {% if pv.type == 'img' %}<img src="{{ pv.src }}" alt="">{% else %}<div class="lp-frame"{% if pv.ig %} data-igfit="shape"{% endif %}><iframe {% if pv.ig %}data-ig {% endif %}src="{{ pv.src }}" loading="lazy" scrolling="no" title="Vista previa" allow="autoplay; encrypted-media; fullscreen"></iframe></div>{% endif %}</div>
-        {% elif w.video_url %}<p class="flash error" style="margin:0">Este enlace no se reconoce. Usa un enlace de YouTube, Vimeo, Facebook o Instagram.</p>{% endif %}
-        <div class="sources"><span>Facebook <small>video, reel o publicación</small></span><span>Instagram <small>publicación o reel</small></span><span>YouTube</span><span>Vimeo</span></div>
-        <p class="help">Copia el enlace desde el navegador o con el botón «Compartir → Copiar enlace». La publicación tiene que ser <b>pública</b>. En la web se verá con <b>su portada oficial</b> y al darle play se reproduce <b>dentro del recuadro</b>, sin salir de la página.</p>
+        {% if pv %}<div class="link-preview {{ 'is-ig' if pv.ig }}"><span class="muted">How it will look on the website ({{ pv.plat }}):</span>
+          {% if pv.type == 'img' %}<img src="{{ pv.src }}" alt="">{% else %}<div class="lp-frame"{% if pv.ig %} data-igfit="shape"{% endif %}><iframe {% if pv.ig %}data-ig {% endif %}src="{{ pv.src }}" loading="lazy" scrolling="no" title="Preview" allow="autoplay; encrypted-media; fullscreen"></iframe></div>{% endif %}</div>
+        {% elif w.video_url %}<p class="flash error" style="margin:0">This link is not recognized. Use a YouTube, Vimeo, Facebook or Instagram link.</p>{% endif %}
+        <div class="sources"><span>Facebook <small>video, reel or post</small></span><span>Instagram <small>post or reel</small></span><span>YouTube</span><span>Vimeo</span></div>
+        <p class="help">Copy the link from the browser or with "Share → Copy link". The post must be <b>public</b>. On the website it shows <b>its official cover</b> and plays <b>inside the frame</b>, without leaving the page.</p>
       </fieldset>
-      {{ image_field('image', 'Imagen de portada', w.image, 'Solo hace falta si NO pegas un enlace. Con enlace se usa la portada oficial de la publicación.') }}
-      <fieldset class="box"><legend>O sube un archivo de video (opcional)</legend>
-        {% if w.video %}<p class="current">Video actual: <a href="{{ media(w.video) }}" target="_blank" rel="noopener">ver archivo ↗</a></p>{% endif %}
-        <label class="btn btn-ghost file">Subir archivo MP4<input type="file" name="video" accept="video/mp4,video/webm" data-filename></label>
-        <p class="help">Máximo 400 MB. Para videos largos es mejor un enlace. Si subes un archivo, reemplaza al enlace.</p>
-        {% if w.video or w.video_url %}<label class="check"><input type="checkbox" name="quitar_video" value="1"> Quitar el video / enlace (dejar solo la imagen)</label>{% endif %}
+      {{ image_field('image', 'Cover image', w.image, 'Only needed if you do NOT paste a link. With a link, the official cover of the post is used.') }}
+      <fieldset class="box"><legend>Or upload a video file (optional)</legend>
+        {% if w.video %}<p class="current">Current video: <a href="{{ media(w.video) }}" target="_blank" rel="noopener">view file ↗</a></p>{% endif %}
+        <label class="btn btn-ghost file">Upload MP4 file<input type="file" name="video" accept="video/mp4,video/webm" data-filename></label>
+        <p class="help">Maximum 400 MB. For long videos a link is better. Uploading a file replaces the link.</p>
+        {% if w.video or w.video_url %}<label class="check"><input type="checkbox" name="remove_video" value="1"> Remove the video / link (keep only the image)</label>{% endif %}
       </fieldset>
     </div>
     <div class="col side-col">{{ status(w) }}</div>

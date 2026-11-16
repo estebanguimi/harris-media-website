@@ -22,13 +22,13 @@ if 'href="blog.html">NEWS</a>' not in s:
 names = ['HOME', 'WAR ROOM', 'CLIENTS', 'SERVICES', 'WORKS', 'TEAM', 'CONTACT']
 chev = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="{}"/></svg>'
 dots = ''.join(
-    f'<button type="button" class="indicator-dot{" text-primary-container" if k == 0 else " text-outline"}" data-slide="{k}" aria-label="Ir a {n.title()}" title="{k + 1:02d} · {n}">'
+    f'<button type="button" class="indicator-dot{" text-primary-container" if k == 0 else " text-outline"}" data-slide="{k}" aria-label="Go to {n.title()}" title="{k + 1:02d} · {n}">'
     f'<span class="rail-lbl"><i>{k + 1:02d}</i>{n}</span><span class="rail-sq"></span></button>' for k, n in enumerate(names))
-rail = (f'<nav id="hmg-rail" aria-label="Secciones de la página">'
-        f'<button type="button" class="rail-arrow" data-dir="-1" aria-label="Sección anterior">{chev.format("M6 15l6-6 6 6")}</button>'
+rail = (f'<nav id="hmg-rail" aria-label="Page sections">'
+        f'<button type="button" class="rail-arrow" data-dir="-1" aria-label="Previous section">{chev.format("M6 15l6-6 6 6")}</button>'
         f'<div class="rail-count" aria-hidden="true"><b>01</b><span>/{len(names):02d}</span></div>'
         f'<div class="rail-dots"><span class="rail-line"><i></i></span>{dots}</div>'
-        f'<button type="button" class="rail-arrow" data-dir="1" aria-label="Sección siguiente">{chev.format("M6 9l6 6 6-6")}</button></nav>')
+        f'<button type="button" class="rail-arrow" data-dir="1" aria-label="Next section">{chev.format("M6 9l6 6 6-6")}</button></nav>')
 old = re.search(r'<div class="[^"]*" id="slide-indicators">.*?</div><!-- FULL VIEWPORT', s, re.S)
 assert old, 'slide indicators not found'
 s = s.replace(old.group(0), rail + '<!-- FULL VIEWPORT', 1)
@@ -71,7 +71,7 @@ new MutationObserver(sync).observe(rail,{subtree:true,attributes:true,attributeF
 [].forEach.call(arrows,function(a){a.addEventListener("click",function(){var k=cur()+parseInt(a.getAttribute("data-dir"),10);if(k>=0&&k<n)dots[k].click()})});
 sync()})();
 </script>'''
-lock = ('<a class="staff-key" href="admin" title="Acceso del equipo" aria-label="Acceso del equipo">'
+lock = ('<a class="staff-key" href="admin" title="Team access" aria-label="Team access">'
         '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></a>')
 cp = '<span class="">© 2026 HARRIS MEDIA GROUP</span>'
 assert s.count(cp) == 1, 'copyright not found'

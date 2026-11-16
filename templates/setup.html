@@ -1,14 +1,14 @@
-{% extends 'base.html' %}{% block title %}Primer uso{% endblock %}{% block body %}
+{% extends 'base.html' %}{% block title %}First-time setup{% endblock %}{% block body %}
 <div class="card narrow">
   <div class="logo big"><b>HMG</b><span>Panel</span></div>
-  <h1>Bienvenido</h1>
-  <p class="help">Es la primera vez que abres el panel. Crea el usuario y la contraseña con los que vas a entrar.</p>
+  <h1>Welcome</h1>
+  <p class="help">This is the first time the panel is opened. Create the username and password you will log in with.</p>
   <form method="post">
     <input type="hidden" name="_csrf" value="{{ csrf }}">
-    <label>Usuario<input name="usuario" required autocomplete="username"></label>
-    <label>Contraseña <small>(mínimo 8 caracteres)</small><input name="clave" type="password" minlength="8" required autocomplete="new-password"></label>
-    <label>Repite la contraseña<input name="clave2" type="password" minlength="8" required autocomplete="new-password"></label>
-    <button class="btn btn-hot wide" type="submit">Crear mi cuenta</button>
+    <label>Username<input name="username" required autocomplete="username"></label>
+    <label>Password <small>(at least 8 characters)</small><input name="password" type="password" minlength="8" required autocomplete="new-password"></label>
+    <label>Repeat the password<input name="password2" type="password" minlength="8" required autocomplete="new-password"></label>
+    <button class="btn btn-hot wide" type="submit">Create my account</button>
   </form>
 </div>
 {% endblock %}

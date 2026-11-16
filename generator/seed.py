@@ -29,8 +29,7 @@ def vincent_bio(g):
 
 def run(g):
     c = os.environ['HMG_SEED']
-    os.makedirs(os.path.join(c, 'uploads', '_sistema'), exist_ok=True)
-    open(os.path.join(c, 'uploads', '_sistema', 'persona.svg'), 'w').write(PERSON_SVG)
+    os.makedirs(os.path.join(c, 'uploads'), exist_ok=True)
 
     team = []
     for i, m in enumerate(g['TEAM']):

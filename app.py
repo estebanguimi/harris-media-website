@@ -1,10 +1,10 @@
-"""Harris Media Group — panel de administración del sitio.
+"""Harris Media Group — website admin panel.
 
-Inicia con:  python app.py      (luego abre http://localhost:8000/admin)
+Start with:  python app.py      (then open http://localhost:8000/admin)
 
-Guarda todo en la carpeta `contenido/` (textos en .json + fotos y videos en
-`contenido/uploads/`). Al pulsar «Publicar cambios» regenera el sitio completo en
-`sitio-publicado/`, que es lo que se ve en http://localhost:8000/.
+Everything is stored in the `content/` folder (texts as .json + photos and videos in
+`content/uploads/`). Pressing "Publish changes" rebuilds the whole website into
+`site/`, which is what http://localhost:8000/ serves.
 """
 import json
 import os
@@ -25,10 +25,16 @@ from PIL import Image, ImageOps
 from werkzeug.security import check_password_hash, generate_password_hash
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-GEN = os.path.join(BASE, 'generador')
-DATA = os.environ.get('HMG_DATA') or os.path.join(BASE, 'contenido')
-PUBLIC = os.environ.get('HMG_PUBLIC') or os.path.join(BASE, 'sitio-publicado')
-PREVIEW = os.path.join(BASE, 'vista-previa')
+GEN = os.path.join(BASE, 'generator')
+def _folder(new, old):
+    """English folder name; installs made before the translation keep their Spanish-named folder."""
+    n, o = os.path.join(BASE, new), os.path.join(BASE, old)
+    return o if os.path.isdir(o) and not os.path.isdir(n) else n
+
+
+DATA = os.environ.get('HMG_DATA') or _folder('content', 'contenido')
+PUBLIC = os.environ.get('HMG_PUBLIC') or os.path.join(BASE, 'site')
+PREVIEW = os.path.join(BASE, 'preview')
 UPLOADS = os.path.join(DATA, 'uploads')
 sys.path.insert(0, GEN)
 import richtext  # noqa: E402
@@ -50,9 +56,9 @@ PYTHON = _python()
 MAX_VIDEO_MB = 400
 VIDEO_EXT = {'.mp4', '.webm', '.m4v'}
 CATEGORIES = [('video', 'Video'), ('social', 'Social'), ('creative', 'Creative'), ('brand', 'Brand')]
-DEPTS = [('auto', 'Automática (según el cargo)'), ('leadership', 'Liderazgo'), ('accounts', 'Cuentas'), ('creative', 'Creativo y web'), ('video', 'Video')]
-LANGS = [('English', 'Inglés'), ('Spanish', 'Español'), ('Portuguese', 'Portugués')]
-FITS = [('photo', 'Foto (llena todo el recuadro)'), ('logo', 'Logo (centrado sobre fondo blanco)'), ('shot', 'Captura de pantalla (completa, sin recortar)')]
+DEPTS = [('auto', 'Automatic (based on the job title)'), ('leadership', 'Leadership'), ('accounts', 'Accounts'), ('creative', 'Creative & Web'), ('video', 'Video')]
+LANGS = [('English', 'English'), ('Spanish', 'Spanish'), ('Portuguese', 'Portuguese')]
+FITS = [('photo', 'Photo (fills the whole frame)'), ('logo', 'Logo (centered on a white background)'), ('shot', 'Screenshot (complete, not cropped)')]
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = (MAX_VIDEO_MB + 50) * 1024 * 1024
@@ -101,7 +107,10 @@ def unique_slug(base, taken):
 
 
 def secret_key():
-    p = os.path.join(DATA, '.clave-sesion')
+    p = os.path.join(DATA, '.session-key')
+    old = os.path.join(DATA, '.clave-sesion')  # name used before the translation
+    if os.path.exists(old) and not os.path.exists(p):
+        os.replace(old, p)
     if not os.path.exists(p):
         os.makedirs(DATA, exist_ok=True)
         with open(p, 'w') as f:
@@ -118,7 +127,7 @@ def save_image(fs, folder, max_side=2000):
         im = ImageOps.exif_transpose(im)
         im.load()
     except Exception:
-        raise ValueError('El archivo no es una imagen válida (usa JPG, PNG o WebP).')
+        raise ValueError('That file is not a valid image (use JPG, PNG or WebP).')
     if im.mode not in ('RGB', 'RGBA'):
         im = im.convert('RGBA' if 'A' in im.getbands() or im.mode == 'P' else 'RGB')
     im.thumbnail((max_side, max_side))
@@ -133,20 +142,20 @@ def save_video(fs, folder='works'):
         return None
     ext = os.path.splitext(fs.filename)[1].lower()
     if ext not in VIDEO_EXT:
-        raise ValueError('El video debe ser MP4 o WebM. (Si está en YouTube, Vimeo, Facebook o Instagram, pega el enlace en su lugar).')
+        raise ValueError('The video must be MP4 or WebM. (If it is on YouTube, Vimeo, Facebook or Instagram, paste the link instead.)')
     name = f'{slugify(os.path.splitext(fs.filename)[0])[:40]}-{uuid.uuid4().hex[:8]}{ext}'
     os.makedirs(os.path.join(UPLOADS, folder), exist_ok=True)
     dest = os.path.join(UPLOADS, folder, name)
     fs.save(dest)
     if os.path.getsize(dest) > MAX_VIDEO_MB * 1024 * 1024:
         os.remove(dest)
-        raise ValueError(f'El video pesa más de {MAX_VIDEO_MB} MB. Súbelo a YouTube, Vimeo o Facebook y pega el enlace.')
+        raise ValueError(f'The video is larger than {MAX_VIDEO_MB} MB. Upload it to YouTube, Vimeo or Facebook and paste the link.')
     return f'media/{folder}/{name}'
 
 
 def remove_media(p):
     """Deletes an uploaded file that is no longer used (only inside uploads/)."""
-    if p and p.startswith('media/') and '_sistema' not in p:
+    if p and p.startswith('media/') and '_sistema' not in p and '_system' not in p:
         full = os.path.realpath(os.path.join(UPLOADS, p[len('media/'):]))
         if full.startswith(os.path.realpath(UPLOADS) + os.sep) and os.path.isfile(full):
             os.remove(full)
@@ -164,7 +173,7 @@ def build(target, drafts=False):
         if r.returncode != 0:
             shutil.rmtree(tmp, ignore_errors=True)
             app.logger.error(r.stderr)
-            raise RuntimeError(r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'error desconocido')
+            raise RuntimeError(r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'unknown error')
         landing = os.path.join(GEN, 'landing')
         if not os.path.exists(os.path.join(tmp, 'index.html')):  # the generator builds the homepage with the panel's works
             shutil.copy(os.path.join(landing, 'index.html'), os.path.join(tmp, 'index.html'))
@@ -189,8 +198,8 @@ def first_run():
     os.makedirs(DATA, exist_ok=True)
     if not os.path.exists(path('team')):
         env = dict(os.environ, HMG_SEED=DATA)
-        subprocess.run([PYTHON, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), os.path.join(BASE, '.semilla')], env=env, check=True)
-        shutil.rmtree(os.path.join(BASE, '.semilla'), ignore_errors=True)
+        subprocess.run([PYTHON, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), os.path.join(BASE, '.seed')], env=env, check=True)
+        shutil.rmtree(os.path.join(BASE, '.seed'), ignore_errors=True)
     if not os.path.isdir(PUBLIC):
         publish()
 
@@ -199,7 +208,9 @@ def first_run():
 # auth + csrf
 # ======================================================================
 def users():
-    return load('usuarios', [])
+    if not os.path.exists(path('users')) and os.path.exists(path('usuarios')):  # name used before the translation
+        os.replace(path('usuarios'), path('users'))
+    return load('users', [])
 
 
 def login_required(f):
@@ -218,7 +229,7 @@ def csrf():
     if request.method == 'POST':
         tok = request.form.get('_csrf') or request.headers.get('X-CSRF')
         if not tok or tok != session.get('csrf'):
-            abort(400, 'La sesión caducó. Vuelve atrás y recarga la página.')
+            abort(400, 'Your session expired. Go back and reload the page.')
 
 
 @app.context_processor
@@ -244,25 +255,25 @@ def nice_date(iso):
         return iso or ''
 
 
-@app.route('/admin/primer-uso', methods=['GET', 'POST'])
+@app.route('/admin/setup', methods=['GET', 'POST'])
 def setup():
     if users():
         return redirect(url_for('login'))
     if request.method == 'POST':
-        u, p1, p2 = request.form.get('usuario', '').strip(), request.form.get('clave', ''), request.form.get('clave2', '')
+        u, p1, p2 = request.form.get('username', '').strip(), request.form.get('password', ''), request.form.get('password2', '')
         if not u or len(p1) < 8:
-            flash('Escribe un usuario y una contraseña de al menos 8 caracteres.', 'error')
+            flash('Enter a username and a password of at least 8 characters.', 'error')
         elif p1 != p2:
-            flash('Las contraseñas no coinciden.', 'error')
+            flash('The passwords do not match.', 'error')
         else:
-            save('usuarios', [dict(user=u, hash=generate_password_hash(p1))], dirty=False)
+            save('users', [dict(user=u, hash=generate_password_hash(p1))], dirty=False)
             session['user'] = u
-            flash('¡Listo! Tu cuenta está creada.', 'ok')
+            flash('Done! Your account has been created.', 'ok')
             return redirect(url_for('dashboard'))
     return render_template('setup.html')
 
 
-@app.route('/admin/entrar', methods=['GET', 'POST'])
+@app.route('/admin/login', methods=['GET', 'POST'])
 def login():
     if not users():
         return redirect(url_for('setup'))
@@ -270,9 +281,9 @@ def login():
         ip = request.remote_addr or '?'
         recent = [t for t in FAILS.get(ip, []) if t > time.time() - 900]
         if len(recent) >= 10:
-            flash('Demasiados intentos. Espera 15 minutos.', 'error')
+            flash('Too many attempts. Please wait 15 minutes.', 'error')
             return render_template('login.html'), 429
-        u, p = request.form.get('usuario', '').strip(), request.form.get('clave', '')
+        u, p = request.form.get('username', '').strip(), request.form.get('password', '')
         acc = next((x for x in users() if x['user'].lower() == u.lower()), None)
         if acc and check_password_hash(acc['hash'], p):
             FAILS.pop(ip, None)
@@ -282,49 +293,49 @@ def login():
             return redirect(nxt if nxt.startswith('/admin') else url_for('dashboard'))
         FAILS[ip] = recent + [time.time()]
         time.sleep(1)
-        flash('Usuario o contraseña incorrectos.', 'error')
+        flash('Wrong username or password.', 'error')
     return render_template('login.html')
 
 
-@app.route('/admin/salir')
+@app.route('/admin/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
 
-@app.route('/admin/cuenta', methods=['GET', 'POST'])
+@app.route('/admin/account', methods=['GET', 'POST'])
 @login_required
 def account():
     us = users()
     if request.method == 'POST':
-        act = request.form.get('accion')
-        if act == 'clave':
+        act = request.form.get('action')
+        if act == 'password':
             me = next(x for x in us if x['user'] == session['user'])
-            if not check_password_hash(me['hash'], request.form.get('actual', '')):
-                flash('La contraseña actual no es correcta.', 'error')
-            elif len(request.form.get('nueva', '')) < 8:
-                flash('La nueva contraseña debe tener al menos 8 caracteres.', 'error')
+            if not check_password_hash(me['hash'], request.form.get('current', '')):
+                flash('The current password is not correct.', 'error')
+            elif len(request.form.get('new', '')) < 8:
+                flash('The new password must be at least 8 characters long.', 'error')
             else:
-                me['hash'] = generate_password_hash(request.form['nueva'])
-                save('usuarios', us, dirty=False)
-                flash('Contraseña cambiada.', 'ok')
-        elif act == 'nuevo':
-            u, p = request.form.get('usuario', '').strip(), request.form.get('clave', '')
+                me['hash'] = generate_password_hash(request.form['new'])
+                save('users', us, dirty=False)
+                flash('Password changed.', 'ok')
+        elif act == 'add':
+            u, p = request.form.get('username', '').strip(), request.form.get('password', '')
             if not u or len(p) < 8:
-                flash('Escribe un usuario y una contraseña de al menos 8 caracteres.', 'error')
+                flash('Enter a username and a password of at least 8 characters.', 'error')
             elif any(x['user'].lower() == u.lower() for x in us):
-                flash('Ese usuario ya existe.', 'error')
+                flash('That username already exists.', 'error')
             else:
                 us.append(dict(user=u, hash=generate_password_hash(p)))
-                save('usuarios', us, dirty=False)
-                flash(f'Usuario «{u}» creado.', 'ok')
-        elif act == 'borrar':
-            u = request.form.get('usuario')
+                save('users', us, dirty=False)
+                flash(f'User "{u}" created.', 'ok')
+        elif act == 'remove':
+            u = request.form.get('username')
             if u == session['user']:
-                flash('No puedes borrar tu propio usuario.', 'error')
+                flash('You cannot delete your own user.', 'error')
             else:
-                save('usuarios', [x for x in us if x['user'] != u], dirty=False)
-                flash(f'Usuario «{u}» eliminado.', 'ok')
+                save('users', [x for x in us if x['user'] != u], dirty=False)
+                flash(f'User "{u}" removed.', 'ok')
         return redirect(url_for('account'))
     return render_template('account.html', users=us)
 
@@ -342,28 +353,28 @@ def dashboard():
     return render_template('dashboard.html', cw=count(w), cn=count(n), ct=count(t), latest=latest)
 
 
-@app.route('/admin/publicar', methods=['POST'])
+@app.route('/admin/publish', methods=['POST'])
 @login_required
 def do_publish():
     try:
         publish()
-        flash('¡Sitio publicado! Los cambios ya se ven en la web.', 'ok')
+        flash('Website published! The changes are now live.', 'ok')
     except Exception as ex:
-        flash(f'No se pudo publicar: {ex}', 'error')
-    return redirect(request.form.get('volver') or url_for('dashboard'))
+        flash(f'Could not publish: {ex}', 'error')
+    return redirect(request.form.get('back') or url_for('dashboard'))
 
 
 def preview_redirect(page):
     try:
         build(PREVIEW, drafts=True)
     except Exception as ex:
-        flash(f'No se pudo crear la vista previa: {ex}', 'error')
+        flash(f'Could not create the preview: {ex}', 'error')
         return None
-    return redirect(f'/vista-previa/{page}')
+    return redirect(f'/preview/{page}')
 
 
-@app.route('/vista-previa/')
-@app.route('/vista-previa/<path:p>')
+@app.route('/preview/')
+@app.route('/preview/<path:p>')
 @login_required
 def preview_files(p='index.html'):
     if not os.path.isdir(PREVIEW):
@@ -371,15 +382,15 @@ def preview_files(p='index.html'):
     return send_from_directory(PREVIEW, p)
 
 
-@app.route('/admin/subir-imagen', methods=['POST'])
+@app.route('/admin/upload-image', methods=['POST'])
 @login_required
 def upload_inline():
     try:
-        p = save_image(request.files.get('archivo'), 'inline', 1600)
+        p = save_image(request.files.get('file'), 'inline', 1600)
     except ValueError as ex:
         return jsonify(error=str(ex)), 400
     if not p:
-        return jsonify(error='No llegó ninguna imagen.'), 400
+        return jsonify(error='No image was received.'), 400
     return jsonify(url=p)
 
 
@@ -388,7 +399,7 @@ def move(items, key, val, direction):
     i = next((k for k, x in enumerate(items) if x[key] == val), None)
     if i is None:
         abort(404)
-    j = i - 1 if direction == 'arriba' else i + 1
+    j = i - 1 if direction == 'up' else i + 1
     if 0 <= j < len(items):
         items[i], items[j] = items[j], items[i]
     for k, x in enumerate(items):
@@ -397,7 +408,7 @@ def move(items, key, val, direction):
 
 
 def after_save(page, back):
-    if request.form.get('accion') == 'vista':
+    if request.form.get('action') == 'preview':
         r = preview_redirect(page)
         if r:
             return r
@@ -430,14 +441,14 @@ def preview_helper():
     return dict(link_preview=link_preview)
 
 
-@app.route('/admin/trabajos')
+@app.route('/admin/works')
 @login_required
 def works_list():
     return render_template('works_list.html', items=sorted(load('works'), key=lambda x: x.get('order', 0)), cats=dict(CATEGORIES))
 
 
-@app.route('/admin/trabajos/nuevo', methods=['GET', 'POST'])
-@app.route('/admin/trabajos/<wid>', methods=['GET', 'POST'])
+@app.route('/admin/works/new', methods=['GET', 'POST'])
+@app.route('/admin/works/<wid>', methods=['GET', 'POST'])
 @login_required
 def work_edit(wid=None):
     items = load('works')
@@ -459,15 +470,15 @@ def work_edit(wid=None):
             remove_media(new.get('image')); new['image'] = img
         if vid:
             remove_media(new.get('video')); new['video'] = vid; new['video_url'] = ''
-        if f.get('quitar_video'):
+        if f.get('remove_video'):
             remove_media(new.get('video')); new['video'] = ''; new['video_url'] = ''
         if new['video_url']:
             import content_mode
             if not content_mode.embed_url(new['video_url']):
-                flash('Ese enlace no se reconoce. Usa un enlace de YouTube, Vimeo, Facebook o Instagram (copiado del navegador o del botón «Compartir»).', 'error')
+                flash('That link is not recognized. Use a YouTube, Vimeo, Facebook or Instagram link (copied from the browser or from the "Share" button).', 'error')
                 return render_template('work_form.html', w=new, cats=CATEGORIES)
         if not new['title'] or not (new.get('image') or new.get('video_url')):
-            flash('El trabajo necesita un título y una imagen de portada (o un enlace de video o publicación).', 'error')
+            flash('The work needs a title and a cover image (or a video / post link).', 'error')
             return render_template('work_form.html', w=new, cats=CATEGORIES)
         if w:
             items[items.index(w)] = new
@@ -478,12 +489,12 @@ def work_edit(wid=None):
                 x['order'] = x.get('order', 0) + 1
             items.append(new)
         save('works', items)
-        flash(f'«{new["title"]}» guardado. Pulsa «Publicar cambios» para que se vea en la web.', 'ok')
+        flash(f'"{new["title"]}" saved. Press "Publish changes" to make it live.', 'ok')
         return after_save('our-works.html', url_for('works_list'))
     return render_template('work_form.html', w=w or dict(status='published', category='video', year=str(date.today().year)), cats=CATEGORIES)
 
 
-@app.route('/admin/trabajos/<wid>/borrar', methods=['POST'])
+@app.route('/admin/works/<wid>/delete', methods=['POST'])
 @login_required
 def work_delete(wid):
     items = load('works')
@@ -491,11 +502,11 @@ def work_delete(wid):
     if w:
         remove_media(w.get('image')); remove_media(w.get('video'))
         save('works', [x for x in items if x is not w])
-        flash(f'«{w["title"]}» eliminado.', 'ok')
+        flash(f'"{w["title"]}" deleted.', 'ok')
     return redirect(url_for('works_list'))
 
 
-@app.route('/admin/trabajos/<wid>/<any(arriba,abajo):d>', methods=['POST'])
+@app.route('/admin/works/<wid>/<any(up,down):d>', methods=['POST'])
 @login_required
 def work_move(wid, d):
     save('works', move(load('works'), 'id', wid, d))
@@ -505,14 +516,14 @@ def work_move(wid, d):
 # ======================================================================
 # NEWS
 # ======================================================================
-@app.route('/admin/noticias')
+@app.route('/admin/news')
 @login_required
 def news_list():
     return render_template('news_list.html', items=sorted(load('news'), key=lambda x: x.get('date', ''), reverse=True))
 
 
-@app.route('/admin/noticias/nueva', methods=['GET', 'POST'])
-@app.route('/admin/noticias/<slug>', methods=['GET', 'POST'])
+@app.route('/admin/news/new', methods=['GET', 'POST'])
+@app.route('/admin/news/<slug>', methods=['GET', 'POST'])
 @login_required
 def news_edit(slug=None):
     items = load('news')
@@ -534,10 +545,10 @@ def news_edit(slug=None):
             return render_template('news_form.html', n=new, cats=cats, fits=FITS)
         if img:
             remove_media(new.get('image')); new['image'] = img
-        if f.get('quitar_imagen'):
+        if f.get('remove_image'):
             remove_media(new.get('image')); new['image'] = ''
         if not new['title'] or not richtext.text(new['body']):
-            flash('La noticia necesita un título y un texto.', 'error')
+            flash('The story needs a title and some text.', 'error')
             return render_template('news_form.html', n=new, cats=cats, fits=FITS)
         if n:
             items[items.index(n)] = new
@@ -545,12 +556,12 @@ def news_edit(slug=None):
             new['slug'] = unique_slug(slugify(new['title']), {x['slug'] for x in items})
             items.append(new)
         save('news', items)
-        flash(f'«{new["title"]}» guardada. Pulsa «Publicar cambios» para que se vea en la web.', 'ok')
+        flash(f'"{new["title"]}" saved. Press "Publish changes" to make it live.', 'ok')
         return after_save(f'blog-{new["slug"]}.html', url_for('news_list'))
     return render_template('news_form.html', n=n or dict(status='published', date=date.today().isoformat(), fit='photo'), cats=cats, fits=FITS)
 
 
-@app.route('/admin/noticias/<slug>/borrar', methods=['POST'])
+@app.route('/admin/news/<slug>/delete', methods=['POST'])
 @login_required
 def news_delete(slug):
     items = load('news')
@@ -558,21 +569,21 @@ def news_delete(slug):
     if n:
         remove_media(n.get('image'))
         save('news', [x for x in items if x is not n])
-        flash(f'«{n["title"]}» eliminada.', 'ok')
+        flash(f'"{n["title"]}" deleted.', 'ok')
     return redirect(url_for('news_list'))
 
 
 # ======================================================================
 # TEAM
 # ======================================================================
-@app.route('/admin/equipo')
+@app.route('/admin/team')
 @login_required
 def team_list():
     return render_template('team_list.html', items=sorted(load('team'), key=lambda x: x.get('order', 0)), depts=dict(DEPTS))
 
 
-@app.route('/admin/equipo/nuevo', methods=['GET', 'POST'])
-@app.route('/admin/equipo/<slug>', methods=['GET', 'POST'])
+@app.route('/admin/team/new', methods=['GET', 'POST'])
+@app.route('/admin/team/<slug>', methods=['GET', 'POST'])
 @login_required
 def team_edit(slug=None):
     items = load('team')
@@ -603,10 +614,10 @@ def team_edit(slug=None):
         if not new.get('portrait'):
             new['portrait'] = new.get('photo', '')
         if not new['name'] or not new['title']:
-            flash('Escribe al menos el nombre y el cargo.', 'error')
+            flash('Enter at least the name and the job title.', 'error')
             return render_template('team_form.html', m=new, depts=DEPTS, langs=LANGS)
         if not new.get('photo'):
-            flash('Sube una foto de la persona.', 'error')
+            flash('Upload a photo of the person.', 'error')
             return render_template('team_form.html', m=new, depts=DEPTS, langs=LANGS)
         if m:
             items[items.index(m)] = new
@@ -615,12 +626,12 @@ def team_edit(slug=None):
             new['order'] = max([x.get('order', 0) for x in items] or [0]) + 1
             items.append(new)
         save('team', items)
-        flash(f'Perfil de {new["name"]} guardado. Pulsa «Publicar cambios» para que se vea en la web.', 'ok')
+        flash(f'{new["name"]}\'s profile saved. Press "Publish changes" to make it live.', 'ok')
         return after_save(f'team-{new["slug"]}.html', url_for('team_list'))
     return render_template('team_form.html', m=m or dict(status='published', dept='auto', langs=['English'], bio={}), depts=DEPTS, langs=LANGS)
 
 
-@app.route('/admin/equipo/<slug>/borrar', methods=['POST'])
+@app.route('/admin/team/<slug>/delete', methods=['POST'])
 @login_required
 def team_delete(slug):
     items = load('team')
@@ -630,11 +641,11 @@ def team_delete(slug):
         if m.get('portrait') != m.get('photo'):
             remove_media(m.get('portrait'))
         save('team', [x for x in items if x is not m])
-        flash(f'Perfil de {m["name"]} eliminado.', 'ok')
+        flash(f'{m["name"]}\'s profile deleted.', 'ok')
     return redirect(url_for('team_list'))
 
 
-@app.route('/admin/equipo/<slug>/<any(arriba,abajo):d>', methods=['POST'])
+@app.route('/admin/team/<slug>/<any(up,down):d>', methods=['POST'])
 @login_required
 def team_move(slug, d):
     save('team', move(load('team'), 'slug', slug, d))
@@ -662,7 +673,7 @@ def site(p='index.html'):
 
 @app.errorhandler(413)
 def too_big(_):
-    flash(f'El archivo es demasiado grande (máximo {MAX_VIDEO_MB} MB).', 'error')
+    flash(f'The file is too large (maximum {MAX_VIDEO_MB} MB).', 'error')
     return redirect(request.referrer or url_for('dashboard'))
 
 
@@ -674,8 +685,8 @@ if __name__ == '__main__':
     first_run()
     port = int(os.environ.get('PORT', 8000))
     host = os.environ.get('HOST', '127.0.0.1')
-    print(f'\n  Panel listo:  http://localhost:{port}/admin\n  Sitio web:    http://localhost:{port}/\n  (Para apagarlo, cierra esta ventana)\n')
-    if os.environ.get('HMG_ABRIR') == '1':
+    print(f'\n  Admin panel:  http://localhost:{port}/admin\n  Website:      http://localhost:{port}/\n  (Close this window to stop it)\n')
+    if os.environ.get('HMG_OPEN') == '1':
         import webbrowser
         threading.Timer(1.5, webbrowser.open, [f'http://localhost:{port}/admin']).start()
     try:

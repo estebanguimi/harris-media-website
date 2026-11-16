@@ -1,19 +1,19 @@
-{% extends 'base.html' %}{% block title %}Inicio{% endblock %}{% block body %}
-<h1>Hola, {{ user }} 👋</h1>
-<p class="help">¿Qué quieres hacer hoy? Cuando termines, pulsa <b>Publicar cambios</b> (arriba a la derecha) para que todo se vea en la web.</p>
+{% extends 'base.html' %}{% block title %}Home{% endblock %}{% block body %}
+<h1>Hi, {{ user }} 👋</h1>
+<p class="help">What would you like to do today? When you are done, press <b>Publish changes</b> (top right) to make everything live on the website.</p>
 <div class="quick">
-  <a class="qa" href="{{ url_for('work_edit') }}"><i>＋</i><b>Subir un trabajo</b><span>Foto o video para Our Works</span></a>
-  <a class="qa" href="{{ url_for('news_edit') }}"><i>＋</i><b>Escribir una noticia</b><span>Nueva entrada para News</span></a>
-  <a class="qa" href="{{ url_for('team_edit') }}"><i>＋</i><b>Añadir una persona</b><span>Nuevo perfil en Our Team</span></a>
+  <a class="qa" href="{{ url_for('work_edit') }}"><i>＋</i><b>Add a work</b><span>Photo, video or post for Our Works</span></a>
+  <a class="qa" href="{{ url_for('news_edit') }}"><i>＋</i><b>Write a story</b><span>New entry for News</span></a>
+  <a class="qa" href="{{ url_for('team_edit') }}"><i>＋</i><b>Add a person</b><span>New profile in Our Team</span></a>
 </div>
 <div class="stats">
-  <a href="{{ url_for('works_list') }}"><b>{{ cw[0] }}</b><span>trabajos publicados</span>{% if cw[1] %}<em>{{ cw[1] }} en borrador</em>{% endif %}</a>
-  <a href="{{ url_for('news_list') }}"><b>{{ cn[0] }}</b><span>noticias publicadas</span>{% if cn[1] %}<em>{{ cn[1] }} en borrador</em>{% endif %}</a>
-  <a href="{{ url_for('team_list') }}"><b>{{ ct[0] }}</b><span>personas en el equipo</span>{% if ct[1] %}<em>{{ ct[1] }} en borrador</em>{% endif %}</a>
+  <a href="{{ url_for('works_list') }}"><b>{{ cw[0] }}</b><span>published works</span>{% if cw[1] %}<em>{{ cw[1] }} in draft</em>{% endif %}</a>
+  <a href="{{ url_for('news_list') }}"><b>{{ cn[0] }}</b><span>published stories</span>{% if cn[1] %}<em>{{ cn[1] }} in draft</em>{% endif %}</a>
+  <a href="{{ url_for('team_list') }}"><b>{{ ct[0] }}</b><span>people on the team</span>{% if ct[1] %}<em>{{ ct[1] }} in draft</em>{% endif %}</a>
 </div>
-<h2>Últimas noticias</h2>
+<h2>Latest stories</h2>
 <div class="rows">
-{% for n in latest %}<a class="row" href="{{ url_for('news_edit', slug=n.slug) }}"><span class="badge {{ n.status }}">{{ 'Publicada' if n.status == 'published' else 'Borrador' }}</span><b>{{ n.title }}</b><span class="muted">{{ nice_date(n.date) }}</span></a>{% else %}<p class="help">Todavía no hay noticias.</p>{% endfor %}
+{% for n in latest %}<a class="row" href="{{ url_for('news_edit', slug=n.slug) }}"><span class="badge {{ n.status }}">{{ 'Published' if n.status == 'published' else 'Draft' }}</span><b>{{ n.title }}</b><span class="muted">{{ nice_date(n.date) }}</span></a>{% else %}<p class="help">No stories yet.</p>{% endfor %}
 </div>
-<div class="tipbox"><b>¿Cómo funciona?</b><ol><li>Crea o edita un trabajo, noticia o persona y pulsa <b>Guardar</b>.</li><li>Si quieres revisarlo antes, usa <b>Guardar y ver vista previa</b>: verás la página tal como quedará (solo tú la ves).</li><li>Cuando esté bien, pulsa <b>Publicar cambios</b>. Los elementos en <b>Borrador</b> nunca se publican.</li></ol></div>
+<div class="tipbox"><b>How does it work?</b><ol><li>Create or edit a work, story or person and press <b>Save</b>.</li><li>To check it first, use <b>Save and preview</b>: you will see the page exactly as it will look (only you can see it).</li><li>When it looks right, press <b>Publish changes</b>. Items marked <b>Draft</b> are never published.</li></ol></div>
 {% endblock %}

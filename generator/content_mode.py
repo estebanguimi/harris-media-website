@@ -8,7 +8,8 @@ import richtext
 
 MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 LANG_ORDER = ['English', 'Spanish', 'Portuguese']
-PLACEHOLDER = 'media/_sistema/persona.svg'
+PLACEHOLDER = 'media/_system/person.svg'
+PERSON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><rect width="400" height="500" fill="#1A1A1A"/><circle cx="200" cy="190" r="80" fill="#333"/><path d="M60 500c0-90 63-150 140-150s140 60 140 150z" fill="#333"/></svg>'
 
 
 def load(c, name):
@@ -35,6 +36,7 @@ def team(c, drafts):
     TEAM, PROF, DEPT = [], {}, {}
     for m in rows:
         photo = m.get('photo') or m.get('portrait') or PLACEHOLDER
+        photo = photo.replace('media/_sistema/persona.svg', PLACEHOLDER)
         TEAM.append(dict(slug=m['slug'], name=m['name'], title=m['title'], img=photo, leader=bool(m.get('leader'))))
         bio = {l: richtext.clean(m.get('bio', {}).get(l, '')) for l in LANG_ORDER}
         bio = {l: h for l, h in bio.items() if h}
@@ -109,6 +111,9 @@ def copy_media(c, out):
     src = os.path.join(c, 'uploads')
     if os.path.isdir(src):
         shutil.copytree(src, os.path.join(out, 'media'), dirs_exist_ok=True)
+    os.makedirs(os.path.join(out, 'media', '_system'), exist_ok=True)
+    with open(os.path.join(out, 'media', '_system', 'person.svg'), 'w', encoding='utf-8') as f:
+        f.write(PERSON_SVG)
 
 
 # ----------------------------------------------------------------------

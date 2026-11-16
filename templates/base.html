@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}Panel{% endblock %} · HMG</title>
@@ -12,25 +12,25 @@
 <aside class="side">
   <a class="logo" href="{{ url_for('dashboard') }}"><b>HMG</b><span>Panel</span></a>
   <nav>
-    <a href="{{ url_for('dashboard') }}" class="{{ 'on' if request.endpoint == 'dashboard' }}"><i>⌂</i>Inicio</a>
+    <a href="{{ url_for('dashboard') }}" class="{{ 'on' if request.endpoint == 'dashboard' }}"><i>⌂</i>Home</a>
     <a href="{{ url_for('works_list') }}" class="{{ 'on' if request.endpoint.startswith('work') }}"><i>▶</i>Our Works</a>
     <a href="{{ url_for('news_list') }}" class="{{ 'on' if request.endpoint.startswith('news') }}"><i>✎</i>News</a>
     <a href="{{ url_for('team_list') }}" class="{{ 'on' if request.endpoint.startswith('team') }}"><i>☺</i>Our Team</a>
   </nav>
   <div class="side-foot">
-    <a href="/" target="_blank" rel="noopener">Ver la web ↗</a>
-    <a href="{{ url_for('account') }}">Mi cuenta ({{ user }})</a>
-    <a href="{{ url_for('logout') }}">Salir</a>
+    <a href="/" target="_blank" rel="noopener">View website ↗</a>
+    <a href="{{ url_for('account') }}">My account ({{ user }})</a>
+    <a href="{{ url_for('logout') }}">Log out</a>
   </div>
 </aside>
 <header class="top">
   <div class="top-state">
-    {% if state.dirty %}<span class="dot warn"></span><span><b>Hay cambios sin publicar.</b> Aún no se ven en la web.</span>
-    {% else %}<span class="dot ok"></span><span>La web está al día{% if state.published_at %} · publicada el {{ state.published_at[:10] | replace('-', '/') }} a las {{ state.published_at[11:16] }}{% endif %}</span>{% endif %}
+    {% if state.dirty %}<span class="dot warn"></span><span><b>You have unpublished changes.</b> They are not live yet.</span>
+    {% else %}<span class="dot ok"></span><span>The website is up to date{% if state.published_at %} · published {{ state.published_at[:10] | replace('-', '/') }} at {{ state.published_at[11:16] }}{% endif %}</span>{% endif %}
   </div>
-  <form method="post" action="{{ url_for('do_publish') }}" data-busy="Publicando…">
-    <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="volver" value="{{ request.path }}">
-    <button class="btn {{ 'btn-hot' if state.dirty else 'btn-ghost' }}" type="submit">Publicar cambios</button>
+  <form method="post" action="{{ url_for('do_publish') }}" data-busy="Publishing…">
+    <input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="back" value="{{ request.path }}">
+    <button class="btn {{ 'btn-hot' if state.dirty else 'btn-ghost' }}" type="submit">Publish changes</button>
   </form>
 </header>
 {% endif %}
