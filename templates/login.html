@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% block title %}Entrar{% endblock %}{% block body %}
+<div class="card narrow">
+  <div class="logo big"><b>HMG</b><span>Panel</span></div>
+  <h1>Entrar</h1>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf }}">
+    <label>Usuario<input name="usuario" required autofocus autocomplete="username"></label>
+    <label>Contraseña<input name="clave" type="password" required autocomplete="current-password"></label>
+    <button class="btn btn-hot wide" type="submit">Entrar</button>
+  </form>
+</div>
+{% endblock %}

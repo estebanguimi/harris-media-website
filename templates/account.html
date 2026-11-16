@@ -1,0 +1,18 @@
+{% extends 'base.html' %}{% block title %}Mi cuenta{% endblock %}{% block body %}
+<h1>Mi cuenta</h1>
+<div class="grid2 even">
+  <form method="post" class="card">
+    <h2>Cambiar mi contraseña</h2><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="clave">
+    <label>Contraseña actual<input type="password" name="actual" required autocomplete="current-password"></label>
+    <label>Nueva contraseña <small>(mínimo 8)</small><input type="password" name="nueva" minlength="8" required autocomplete="new-password"></label>
+    <button class="btn btn-hot" type="submit">Cambiar contraseña</button>
+  </form>
+  <div class="card">
+    <h2>Personas con acceso</h2>
+    <div class="rows">{% for u in users %}<div class="row"><b>{{ u.user }}</b>{% if u.user != user %}<form method="post"><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="borrar"><input type="hidden" name="usuario" value="{{ u.user }}"><button class="btn btn-danger sm" data-confirm="¿Quitar el acceso a {{ u.user }}?">Quitar</button></form>{% else %}<span class="muted">(tú)</span>{% endif %}</div>{% endfor %}</div>
+    <form method="post"><h3>Dar acceso a alguien más</h3><input type="hidden" name="_csrf" value="{{ csrf }}"><input type="hidden" name="accion" value="nuevo">
+      <label>Usuario<input name="usuario" required></label><label>Contraseña <small>(mínimo 8)</small><input type="password" name="clave" minlength="8" required autocomplete="new-password"></label>
+      <button class="btn btn-ghost" type="submit">Crear usuario</button></form>
+  </div>
+</div>
+{% endblock %}

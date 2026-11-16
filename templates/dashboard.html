@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% block title %}Inicio{% endblock %}{% block body %}
+<h1>Hola, {{ user }} 👋</h1>
+<p class="help">¿Qué quieres hacer hoy? Cuando termines, pulsa <b>Publicar cambios</b> (arriba a la derecha) para que todo se vea en la web.</p>
+<div class="quick">
+  <a class="qa" href="{{ url_for('work_edit') }}"><i>＋</i><b>Subir un trabajo</b><span>Foto o video para Our Works</span></a>
+  <a class="qa" href="{{ url_for('news_edit') }}"><i>＋</i><b>Escribir una noticia</b><span>Nueva entrada para News</span></a>
+  <a class="qa" href="{{ url_for('team_edit') }}"><i>＋</i><b>Añadir una persona</b><span>Nuevo perfil en Our Team</span></a>
+</div>
+<div class="stats">
+  <a href="{{ url_for('works_list') }}"><b>{{ cw[0] }}</b><span>trabajos publicados</span>{% if cw[1] %}<em>{{ cw[1] }} en borrador</em>{% endif %}</a>
+  <a href="{{ url_for('news_list') }}"><b>{{ cn[0] }}</b><span>noticias publicadas</span>{% if cn[1] %}<em>{{ cn[1] }} en borrador</em>{% endif %}</a>
+  <a href="{{ url_for('team_list') }}"><b>{{ ct[0] }}</b><span>personas en el equipo</span>{% if ct[1] %}<em>{{ ct[1] }} en borrador</em>{% endif %}</a>
+</div>
+<h2>Últimas noticias</h2>
+<div class="rows">
+{% for n in latest %}<a class="row" href="{{ url_for('news_edit', slug=n.slug) }}"><span class="badge {{ n.status }}">{{ 'Publicada' if n.status == 'published' else 'Borrador' }}</span><b>{{ n.title }}</b><span class="muted">{{ nice_date(n.date) }}</span></a>{% else %}<p class="help">Todavía no hay noticias.</p>{% endfor %}
+</div>
+<div class="tipbox"><b>¿Cómo funciona?</b><ol><li>Crea o edita un trabajo, noticia o persona y pulsa <b>Guardar</b>.</li><li>Si quieres revisarlo antes, usa <b>Guardar y ver vista previa</b>: verás la página tal como quedará (solo tú la ves).</li><li>Cuando esté bien, pulsa <b>Publicar cambios</b>. Los elementos en <b>Borrador</b> nunca se publican.</li></ol></div>
+{% endblock %}

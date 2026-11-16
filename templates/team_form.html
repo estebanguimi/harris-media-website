@@ -1,0 +1,35 @@
+{% extends 'base.html' %}{% from '_macros.html' import status, actions, image_field, editor with context %}
+{% block title %}{{ m.name or 'Nueva persona' }}{% endblock %}{% block body %}
+<a class="back" href="{{ url_for('team_list') }}">← Our Team</a>
+<h1>{{ m.name if m.slug else 'Añadir una persona' }}</h1>
+{% if m.slug %}<p class="help">Página de perfil: <code>team-{{ m.slug }}.html</code></p>{% endif %}
+<form method="post" enctype="multipart/form-data" class="form" data-busy-upload>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="grid2">
+    <div class="col">
+      <div class="row3">
+        <label>Nombre y apellido <em>*</em><input name="name" value="{{ m.name or '' }}" required></label>
+        <label>Cargo <em>*</em><input name="title" value="{{ m.title or '' }}" required placeholder="Ej.: Senior Graphic Designer"></label>
+      </div>
+      <div class="field"><span class="lab">Biografía</span>
+        <div class="tabs" data-tabs>
+          {% for l, t in langs %}<button type="button" class="{{ 'on' if loop.first }}" data-tab="{{ loop.index0 }}">{{ t }}</button>{% endfor %}
+        </div>
+        {% for l, t in langs %}<div data-pane="{{ loop.index0 }}" {{ 'hidden' if not loop.first }}>{{ editor('bio_' + l, (m.bio or {}).get(l, ''), 'Biografía en ' + t|lower + '…') }}</div>{% endfor %}
+        <p class="help">Si escribes la biografía en más de un idioma, el perfil mostrará botones EN / ES / PT. Deja vacío lo que no uses.</p>
+      </div>
+    </div>
+    <div class="col side-col">
+      {{ status(m) }}
+      {{ image_field('photo', 'Foto', m.photo, 'Se ve en la lista del equipo. Vertical (retrato), fondo limpio.', True) }}
+      {{ image_field('portrait', 'Foto del perfil (opcional)', m.portrait if m.portrait != m.photo else '', 'Otra foto solo para su página de perfil. Si no subes ninguna, se usa la de arriba.') }}
+      <label>Área<select name="dept">{% for k, t in depts %}<option value="{{ k }}" {{ 'selected' if m.dept == k }}>{{ t }}</option>{% endfor %}</select></label>
+      <fieldset class="box"><legend>Idiomas que habla</legend>
+        {% for l, t in langs %}<label class="check"><input type="checkbox" name="lang_{{ l }}" value="1" {{ 'checked' if l in (m.langs or []) }}> {{ t }}</label>{% endfor %}</fieldset>
+      <label class="check"><input type="checkbox" name="leader" value="1" {{ 'checked' if m.leader }}> Mostrar en «Leadership» (máximo 3 personas)</label>
+    </div>
+  </div>
+  {{ actions(url_for('team_list'), url_for('team_delete', slug=m.slug) if m.slug else None, m.name) }}
+</form>
+{% if m.slug %}<form id="del-form" method="post" action="{{ url_for('team_delete', slug=m.slug) }}"><input type="hidden" name="_csrf" value="{{ csrf }}"></form>{% endif %}
+{% endblock %}

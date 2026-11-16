@@ -1,0 +1,42 @@
+{% macro status(item) %}
+<fieldset class="status-pick"><legend>Estado</legend>
+  <label class="pill"><input type="radio" name="status" value="published" {{ 'checked' if item.status == 'published' }}><span><b>Publicado</b> — se verá en la web al publicar</span></label>
+  <label class="pill"><input type="radio" name="status" value="draft" {{ 'checked' if item.status != 'published' }}><span><b>Borrador</b> — guardado, pero oculto</span></label>
+</fieldset>
+{% endmacro %}
+{% macro actions(back, del_url=None, del_name='') %}
+<div class="actions">
+  <button class="btn btn-hot" type="submit" name="accion" value="guardar">Guardar</button>
+  <button class="btn btn-ghost" type="submit" name="accion" value="vista" data-busy="Preparando vista previa…">Guardar y ver vista previa</button>
+  <a class="btn btn-link" href="{{ back }}">Cancelar</a>
+  {% if del_url %}<button class="btn btn-danger" type="submit" form="del-form" data-confirm="¿Seguro que quieres borrar «{{ del_name }}»? No se puede deshacer.">Borrar</button>{% endif %}
+</div>
+{% endmacro %}
+{% macro image_field(name, label, current, help, required=False) %}
+<div class="field img-field">
+  <span class="lab">{{ label }}{% if required %} <em>*</em>{% endif %}</span>
+  <div class="img-row">
+    <div class="img-prev {{ 'empty' if not current }}">{% if current %}<img src="{{ media(current) }}" alt="">{% else %}<span>Sin imagen</span>{% endif %}</div>
+    <div><label class="btn btn-ghost file">{{ 'Cambiar imagen' if current else 'Elegir imagen' }}<input type="file" name="{{ name }}" accept="image/jpeg,image/png,image/webp,image/avif" data-preview></label>
+    <p class="help">{{ help }}</p></div>
+  </div>
+</div>
+{% endmacro %}
+{% macro editor(name, value, placeholder='') %}
+<div class="rte">
+  <div class="rte-bar" role="toolbar" aria-label="Formato">
+    <button type="button" data-cmd="h2" title="Subtítulo">Subtítulo</button>
+    <button type="button" data-cmd="p" title="Párrafo normal">Párrafo</button>
+    <button type="button" data-cmd="bold" title="Negrita"><b>B</b></button>
+    <button type="button" data-cmd="italic" title="Cursiva"><i>I</i></button>
+    <button type="button" data-cmd="ul" title="Lista con puntos">• Lista</button>
+    <button type="button" data-cmd="ol" title="Lista numerada">1. Lista</button>
+    <button type="button" data-cmd="quote" title="Cita">“ Cita</button>
+    <button type="button" data-cmd="link" title="Enlace">🔗 Enlace</button>
+    <button type="button" data-cmd="image" title="Insertar imagen">🖼 Imagen</button>
+    <button type="button" data-cmd="clear" title="Quitar formato">✕ Formato</button>
+  </div>
+  <div class="rte-area prose" contenteditable="true" data-placeholder="{{ placeholder }}"></div>
+  <textarea name="{{ name }}" hidden>{{ value or '' }}</textarea>
+</div>
+{% endmacro %}

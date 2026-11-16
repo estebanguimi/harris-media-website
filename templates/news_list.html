@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}News{% endblock %}{% block body %}
+<div class="head"><div><h1>News</h1><p class="help">La noticia con la fecha más reciente sale como principal en la portada de News.</p></div>
+<a class="btn btn-hot" href="{{ url_for('news_edit') }}">＋ Escribir noticia</a></div>
+<div class="rows">
+{% for n in items %}
+<a class="row news-row" href="{{ url_for('news_edit', slug=n.slug) }}">
+  <span class="thumb">{% if n.image %}<img src="{{ media(n.image) }}" alt="" loading="lazy">{% endif %}</span>
+  <span class="row-b"><b>{{ n.title }}</b><span class="muted">{{ n.category }} · {{ nice_date(n.date) }}</span></span>
+  <span class="badge {{ n.status }}">{{ 'Publicada' if n.status == 'published' else 'Borrador' }}</span>
+  {% if loop.first and n.status == 'published' %}<span class="badge lead">Principal</span>{% endif %}
+</a>
+{% else %}<p class="help">Aún no hay noticias.</p>{% endfor %}
+</div>
+{% endblock %}

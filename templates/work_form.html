@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% from '_macros.html' import status, actions, image_field with context %}
+{% block title %}{{ w.title or 'Nuevo trabajo' }}{% endblock %}{% block body %}
+<a class="back" href="{{ url_for('works_list') }}">← Our Works</a>
+<h1>{{ w.title if w.id else 'Subir un trabajo' }}</h1>
+<form method="post" enctype="multipart/form-data" class="form" data-busy-upload>
+  <input type="hidden" name="_csrf" value="{{ csrf }}">
+  <div class="grid2">
+    <div class="col">
+      <label>Título del trabajo <em>*</em><input name="title" value="{{ w.title or '' }}" required placeholder="Ej.: Spot «Back the Blue»"></label>
+      <div class="row3">
+        <label>Cliente<input name="client" value="{{ w.client or '' }}" placeholder="Ej.: Ted Cruz"></label>
+        <label>Año<input name="year" value="{{ w.year or '' }}" inputmode="numeric" maxlength="4"></label>
+        <label>Tipo<select name="category">{% for k, t in cats %}<option value="{{ k }}" {{ 'selected' if w.category == k }}>{{ t }}</option>{% endfor %}</select></label>
+      </div>
+      <fieldset class="box"><legend>Enlace de video o publicación (opcional)</legend>
+        {% if w.video_url %}<p class="current">Enlace actual: <a href="{{ w.video_url }}" target="_blank" rel="noopener">{{ w.video_url }}</a></p>{% endif %}
+        <label>Pega el enlace<input name="video_url" value="{{ w.video_url or '' }}" placeholder="https://www.facebook.com/…  ·  https://www.instagram.com/p/…  ·  https://youtu.be/…"></label>
+        <div class="sources"><span>Facebook <small>video, reel o publicación</small></span><span>Instagram <small>publicación o reel</small></span><span>YouTube</span><span>Vimeo</span></div>
+        <p class="help">Copia el enlace desde el navegador o con el botón «Compartir → Copiar enlace». La publicación tiene que ser <b>pública</b>. Al hacer clic en el trabajo, se abre ahí mismo en la web.</p>
+      </fieldset>
+      {{ image_field('image', 'Imagen de portada', w.image, 'Se ve en la cuadrícula. Obligatoria si no pegas un enlace; si pegas uno y no subes imagen, se muestra una tarjeta con el logo de la red social.') }}
+      <fieldset class="box"><legend>O sube un archivo de video (opcional)</legend>
+        {% if w.video %}<p class="current">Video actual: <a href="{{ media(w.video) }}" target="_blank" rel="noopener">ver archivo ↗</a></p>{% endif %}
+        <label class="btn btn-ghost file">Subir archivo MP4<input type="file" name="video" accept="video/mp4,video/webm" data-filename></label>
+        <p class="help">Máximo 400 MB. Para videos largos es mejor un enlace. Si subes un archivo, reemplaza al enlace.</p>
+        {% if w.video or w.video_url %}<label class="check"><input type="checkbox" name="quitar_video" value="1"> Quitar el video / enlace (dejar solo la imagen)</label>{% endif %}
+      </fieldset>
+    </div>
+    <div class="col side-col">{{ status(w) }}</div>
+  </div>
+  {{ actions(url_for('works_list'), url_for('work_delete', wid=w.id) if w.id else None, w.title) }}
+</form>
+{% if w.id %}<form id="del-form" method="post" action="{{ url_for('work_delete', wid=w.id) }}"><input type="hidden" name="_csrf" value="{{ csrf }}"></form>{% endif %}
+{% endblock %}
