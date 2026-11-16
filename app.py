@@ -33,6 +33,20 @@ UPLOADS = os.path.join(DATA, 'uploads')
 sys.path.insert(0, GEN)
 import richtext  # noqa: E402
 
+def _python():
+    """Interpreter used to run the site generator. Under some web hosts (uWSGI, PythonAnywhere)
+    sys.executable is the server binary, not Python, so fall back to the environment's python."""
+    if os.environ.get('HMG_PYTHON'):
+        return os.environ['HMG_PYTHON']
+    if os.path.basename(sys.executable or '').lower().startswith('python'):
+        return sys.executable
+    for c in (os.path.join(sys.prefix, 'bin', 'python3'), os.path.join(sys.prefix, 'Scripts', 'python.exe'), shutil.which('python3') or ''):
+        if c and os.path.exists(c):
+            return c
+    return 'python3'
+
+
+PYTHON = _python()
 MAX_VIDEO_MB = 400
 VIDEO_EXT = {'.mp4', '.webm', '.m4v'}
 CATEGORIES = [('video', 'Video'), ('social', 'Social'), ('creative', 'Creative'), ('brand', 'Brand')]
@@ -146,7 +160,7 @@ def build(target, drafts=False):
         tmp = target + '.nuevo'
         shutil.rmtree(tmp, ignore_errors=True)
         env = dict(os.environ, HMG_CONTENT=DATA, HMG_DRAFTS='1' if drafts else '0')
-        r = subprocess.run([sys.executable, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), tmp], env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=600)
+        r = subprocess.run([PYTHON, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), tmp], env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=600)
         if r.returncode != 0:
             shutil.rmtree(tmp, ignore_errors=True)
             app.logger.error(r.stderr)
@@ -174,7 +188,7 @@ def first_run():
     os.makedirs(DATA, exist_ok=True)
     if not os.path.exists(path('team')):
         env = dict(os.environ, HMG_SEED=DATA)
-        subprocess.run([sys.executable, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), os.path.join(BASE, '.semilla')], env=env, check=True)
+        subprocess.run([PYTHON, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), os.path.join(BASE, '.semilla')], env=env, check=True)
         shutil.rmtree(os.path.join(BASE, '.semilla'), ignore_errors=True)
     if not os.path.isdir(PUBLIC):
         publish()

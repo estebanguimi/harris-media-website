@@ -15,7 +15,8 @@ Inicio rápido:
 |---|---|
 | Windows | Instala Python 3.11 o más reciente y haz doble clic en `Iniciar (Windows).bat` |
 | Mac | Haz doble clic en `Iniciar (Mac).command` |
-| Servidor | `docker build -t hmg-web .` y luego `docker run -d -p 8000:8000 -v hmg-datos:/datos hmg-web` |
+| **En internet (gratis)** | Sigue [desplegar/PYTHONANYWHERE.md](desplegar/PYTHONANYWHERE.md): web + panel en un link propio |
+| Servidor propio | `docker build -t hmg-web .` y luego `docker run -d -p 8000:8000 -v hmg-datos:/datos hmg-web` |
 
 La web queda en `http://localhost:8000/` y el panel en `http://localhost:8000/admin`.
 

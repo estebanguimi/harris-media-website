@@ -53,7 +53,11 @@ En **Mi cuenta** (abajo a la izquierda) puedes crear usuarios para tus compañer
 Todo lo que creas en el panel se guarda en la carpeta **`contenido/`** (textos + fotos y videos).
 Para tener una copia de seguridad, **copia esa carpeta** a otro lugar (Drive, disco externo…).
 
-## 5. Ponerlo en internet (lo hace una sola vez alguien técnico)
+## 5. Ponerlo en internet
+
+**La forma más fácil (gratis):** sigue los pasos de [desplegar/PYTHONANYWHERE.md](desplegar/PYTHONANYWHERE.md). Son 5 pasos sin programar y quedan la web y el panel en un link propio.
+
+**En un servidor propio** (lo hace una vez alguien técnico):
 
 El panel y la web van juntos en un único programa. Para que esté online, hay que instalarlo una vez en un servidor:
 
