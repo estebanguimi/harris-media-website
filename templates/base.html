@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="csrf-token" content="{{ csrf }}">
 <title>{% block title %}Panel{% endblock %} · HMG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,7 +22,7 @@
   <div class="side-foot">
     <a href="/" target="_blank" rel="noopener">View website ↗</a>
     <a href="{{ url_for('account') }}">My account ({{ user }})</a>
-    <a href="{{ url_for('logout') }}">Log out</a>
+    <form method="post" action="{{ url_for('logout') }}" class="logout"><input type="hidden" name="_csrf" value="{{ csrf }}"><button type="submit">Log out</button></form>
   </div>
 </aside>
 <header class="top">
@@ -38,7 +40,6 @@
   {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}" role="status">{{ m }}</div>{% endfor %}{% endwith %}
   {% block body %}{% endblock %}
 </main>
-<script>window.CSRF = "{{ csrf }}";</script>
 <script src="{{ url_for('static', filename='admin.js') }}"></script>
 </body>
 </html>

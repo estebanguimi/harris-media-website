@@ -203,3 +203,47 @@ def landing(c, drafts, gen_dir, out):
         if 'data-ig ' in rows:
             s = s.replace('</body>', '<script>' + IG_FIT_JS + '</script></body>', 1)
     open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(s)
+
+
+# ----------------------------------------------------------------------
+# Search engines: canonical links, social cards, sitemap.xml, robots.txt
+# ----------------------------------------------------------------------
+def seo(out, base):
+    """Adds what search engines need. `base` is the public address of the website (e.g. https://example.com/)."""
+    import glob
+    import html as H
+    from datetime import date
+    base = (base or '').strip()
+    if not re.match(r'^https?://[^\s"<>]+$', base):
+        return
+    base = base.rstrip('/') + '/'
+    pages = sorted(os.path.basename(p) for p in glob.glob(os.path.join(out, '*.html')))
+    for name in pages:
+        p = os.path.join(out, name)
+        s = open(p, encoding='utf-8').read()
+        url = base if name == 'index.html' else base + name
+        tags = f'<link rel="canonical" href="{H.escape(url)}">\n<meta property="og:url" content="{H.escape(url)}">\n<meta property="og:site_name" content="Harris Media Group">\n<meta property="og:type" content="website">\n<meta name="twitter:card" content="summary_large_image">'
+        if name == 'index.html':
+            gv = os.environ.get('HMG_GOOGLE_VERIFICATION', '').strip()
+            if re.fullmatch(r'[\w-]{10,100}', gv):  # Google Search Console "HTML tag" verification code
+                tags += f'\n<meta name="google-site-verification" content="{gv}">'
+            if 'property="og:title"' not in s:
+                tags += ('\n<meta property="og:title" content="Harris Media Group | Empowering Brands, Elevating Campaigns">'
+                         '\n<meta property="og:description" content="Award-winning conservative political marketing agency. Advertising, web, TV, social, SMS/email, AI and video for campaigns, causes and advocacy.">'
+                         '\n<meta property="og:image" content="https://www.harrismediallc.com/wp-content/uploads/2024/12/cropped-logo-ligth-270x270.png">')
+            ld = {'@context': 'https://schema.org', '@type': 'Organization', 'name': 'Harris Media Group', 'alternateName': 'HM Group',
+                  'url': base, 'logo': 'https://www.harrismediallc.com/wp-content/uploads/2024/12/logo-DARK.png',
+                  'telephone': '+1-512-900-9439', 'email': 'contact@harrismediallc.com',
+                  'description': 'Award-winning conservative political marketing agency: advertising, web, TV, social, SMS/email, AI and video.'}
+            tags += '\n<script type="application/ld+json">' + json.dumps(ld).replace('</', '<\\/') + '</script>'
+        if 'rel="canonical"' not in s:
+            s = s.replace('</head>', tags + '\n</head>', 1)
+            open(p, 'w', encoding='utf-8').write(s)
+    today = date.today().isoformat()
+    prio = lambda n: '1.0' if n == 'index.html' else '0.8' if '-' not in n else '0.6'
+    urls = ''.join(f'<url><loc>{H.escape(base if n == "index.html" else base + n)}</loc><lastmod>{today}</lastmod><priority>{prio(n)}</priority></url>'
+                   for n in pages if n not in ('404.html',))
+    open(os.path.join(out, 'sitemap.xml'), 'w', encoding='utf-8').write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + urls + '</urlset>\n')
+    open(os.path.join(out, 'robots.txt'), 'w', encoding='utf-8').write(
+        f'User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /preview\n\nSitemap: {base}sitemap.xml\n')

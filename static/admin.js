@@ -2,6 +2,8 @@
 (function () {
   "use strict";
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var meta = document.querySelector('meta[name="csrf-token"]');
+  window.CSRF = meta ? meta.getAttribute("content") : "";
 
   function busy(msg) {
     var o = document.createElement("div"); o.className = "busy-overlay"; o.innerHTML = "<span></span>";

@@ -819,21 +819,21 @@ if CONTENT:
 def build_blog():
     data = [(s, c, d, img) + post_content(s) for s, c, d, img in POSTS]
     cats = [('all', 'ALL')] + [(slugify(c), c) for c in dict.fromkeys(p[1] for p in data)]
-    filt = ''.join(f'<button type="button" data-f="{k}"{_Q3 if k == "all" else ""}>{t}</button>' for k, t in cats)
+    filt = ''.join(f'<button type="button" data-f="{k}"{_Q3 if k == "all" else ""}>{e(t)}</button>' for k, t in cats)
     feat = data[0]
     cards = ''.join(f'''<a class="panel post-card hover brackets" href="blog-{s}.html" data-cat="{slugify(c)}" data-reveal>
   <div class="photo">{cover(img, c.title())}</div>
-  <div class="body"><div style="display:flex;justify-content:space-between;gap:10px"><span class="meta" style="color:var(--accent)">{c}</span><span class="meta">{d}</span></div>
+  <div class="body"><div style="display:flex;justify-content:space-between;gap:10px"><span class="meta" style="color:var(--accent)">{e(c)}</span><span class="meta">{e(d)}</span></div>
   <h3>{e(t)}</h3><p>{e(x[:170])}…</p><span class="link-arrow more">READ MORE →</span></div>
 </a>''' for s, c, d, img, t, _, x in data[1:])
     body = hero([('index.html', 'HOME'), (None, 'NEWS')], 'NEWSROOM // PRESS', [('NEWS &', False), ('INSIGHTS', True)],
                 'Press releases, expansion news and perspectives on conservative political marketing from the Harris Media Group team.', '', f'{len(data)} ARTICLES')
     s, c, d, img, t, _, x = feat
     body += f'''<section class="section"><div class="wrap">
-{sec_head('LATEST', 'FEATURED', f'<span class="meta">{c}</span>')}
+{sec_head('LATEST', 'FEATURED', f'<span class="meta">{e(c)}</span>')}
 <a class="panel case hover brackets" href="blog-{s}.html" data-reveal>
   <div class="photo">{cover(img, t)}</div>
-  <div class="body"><span class="meta" style="color:var(--accent)">{c} · {d}</span><h3 class="h-md">{e(t)}</h3><p class="lede" style="font-size:1rem">{e(x[:260])}…</p><span class="btn btn-primary" style="align-self:flex-start">READ THE RELEASE {ARROW}</span></div>
+  <div class="body"><span class="meta" style="color:var(--accent)">{e(c)} · {e(d)}</span><h3 class="h-md">{e(t)}</h3><p class="lede" style="font-size:1rem">{e(x[:260])}…</p><span class="btn btn-primary" style="align-self:flex-start">READ THE RELEASE {ARROW}</span></div>
 </a>
 </div></section>
 <section class="section alt"><div class="wrap">
@@ -852,8 +852,8 @@ def build_blog():
             f'<a class="panel hover r" href="blog-{nxt[0]}.html"><div class="meta">NEXT →</div><div class="h-sm" style="margin-top:8px">{e(nxt[4])}</div></a>' if nxt else '') + '</div>'
         words = t.upper().split()
         mid = max(1, len(words) // 2)
-        body = hero([('index.html', 'HOME'), ('blog.html', 'NEWS'), (None, c)], f'{c} · {d.upper()}',
-                    [(' '.join(words[:mid]), False), (' '.join(words[mid:]), True)])
+        body = hero([('index.html', 'HOME'), ('blog.html', 'NEWS'), (None, c)], f'{e(c)} · {e(d.upper())}',
+                    [(e(' '.join(words[:mid])), False), (e(' '.join(words[mid:])), True)])
         body = body.replace('class="h-xl"', 'class="h-lg"')
         body += f'''<section class="section"><div class="wrap"><div class="article">
 {f'<div class="panel photo brackets on ratio-169" data-reveal style="margin-bottom:40px">{cover(img, t)}</div>' if img else ''}
@@ -1038,4 +1038,6 @@ import sn; sn.build(globals())
 if CONTENT:
     CM.copy_media(CONTENT, OUT)
     CM.landing(CONTENT, DRAFTS, HERE, OUT)
+    if not DRAFTS:
+        CM.seo(OUT, os.environ.get('HMG_SITE_URL', ''))
 print(len(PAGES), 'pages')

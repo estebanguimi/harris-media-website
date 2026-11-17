@@ -17,7 +17,7 @@ import threading
 import time
 import unicodedata
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import wraps
 
 from flask import (Flask, abort, flash, jsonify, redirect, render_template, request, send_file, send_from_directory, session, url_for)
@@ -62,9 +62,15 @@ FITS = [('photo', 'Photo (fills the whole frame)'), ('logo', 'Logo (centered on 
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = (MAX_VIDEO_MB + 50) * 1024 * 1024
+if os.environ.get('HMG_PROXY') == '1':
+    # behind the host's reverse proxy: use the real client address (login rate limit)
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+Image.MAX_IMAGE_PIXELS = 40_000_000  # refuse "decompression bomb" images
 LOCK = threading.Lock()
 BUILD_LOCK = threading.Lock()
-FAILS = {}
+FAILS = {}  # login failures per client address and per username
+DUMMY_HASH = generate_password_hash(secrets.token_hex(16))  # same timing whether a user exists or not
 
 
 # ======================================================================
@@ -88,10 +94,28 @@ def save(name, data, dirty=True):
         with open(tmp, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=1)
         os.replace(tmp, path(name))
+        if name == 'users':
+            try:
+                os.chmod(path(name), 0o600)
+            except OSError:
+                pass
     if dirty:
         st = load('state', {})
         st['dirty'] = True
         save('state', st, dirty=False)
+
+
+def clip(v, n=200):
+    """Form text: stripped, without control characters, limited length."""
+    v = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', v or '').strip()
+    return v[:n]
+
+
+def safe_back(target):
+    """Only allow redirects to pages of this panel (no open redirects)."""
+    if target and target.startswith('/admin') and not target.startswith(('//', '/\\')) and '\\' not in target and '://' not in target:
+        return target
+    return url_for('dashboard')
 
 
 def slugify(t):
@@ -166,9 +190,14 @@ def remove_media(p):
 # ======================================================================
 def build(target, drafts=False):
     with BUILD_LOCK:
-        tmp = target + '.nuevo'
+        tmp = target + '.new'
         shutil.rmtree(tmp, ignore_errors=True)
         env = dict(os.environ, HMG_CONTENT=DATA, HMG_DRAFTS='1' if drafts else '0')
+        try:
+            if not env.get('HMG_SITE_URL'):
+                env['HMG_SITE_URL'] = request.url_root  # public address, used for sitemap and canonical links
+        except RuntimeError:
+            pass
         r = subprocess.run([PYTHON, '-X', 'utf8', '-I', os.path.join(GEN, 'gen.py'), tmp], env=env, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=600)
         if r.returncode != 0:
             shutil.rmtree(tmp, ignore_errors=True)
@@ -179,7 +208,7 @@ def build(target, drafts=False):
             shutil.copy(os.path.join(landing, 'index.html'), os.path.join(tmp, 'index.html'))
         if os.path.isdir(os.path.join(landing, 'videos')):
             shutil.copytree(os.path.join(landing, 'videos'), os.path.join(tmp, 'videos'), dirs_exist_ok=True)
-        old = target + '.anterior'
+        old = target + '.old'
         shutil.rmtree(old, ignore_errors=True)
         if os.path.isdir(target):
             os.replace(target, old)
@@ -227,15 +256,39 @@ def login_required(f):
 @app.before_request
 def csrf():
     if request.method == 'POST':
-        tok = request.form.get('_csrf') or request.headers.get('X-CSRF')
-        if not tok or tok != session.get('csrf'):
+        tok = request.form.get('_csrf') or request.headers.get('X-CSRF') or ''
+        if not session.get('csrf') or not secrets.compare_digest(tok, session['csrf']):
             abort(400, 'Your session expired. Go back and reload the page.')
+
+
+@app.after_request
+def security_headers(resp):
+    h = resp.headers
+    h.setdefault('X-Content-Type-Options', 'nosniff')
+    h.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
+    h.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()')
+    if os.environ.get('HMG_HTTPS') == '1':
+        h.setdefault('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    p = request.path
+    if p.startswith(('/admin', '/preview')):
+        h['X-Frame-Options'] = 'DENY'
+        h['Cache-Control'] = 'no-store'
+        h['X-Robots-Tag'] = 'noindex, nofollow'
+        if p.startswith('/admin') and resp.mimetype == 'text/html':
+            h['Content-Security-Policy'] = (
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self'; connect-src 'self'; "
+                "frame-src https://www.youtube-nocookie.com https://player.vimeo.com https://www.facebook.com https://www.instagram.com; "
+                "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'")
+    else:
+        h.setdefault('X-Frame-Options', 'SAMEORIGIN')
+    return resp
 
 
 @app.context_processor
 def ctx():
     if 'csrf' not in session:
-        session['csrf'] = secrets.token_hex(16)
+        session['csrf'] = secrets.token_hex(32)
     st = load('state', {}) if os.path.exists(path('state')) else {}
     return dict(csrf=session['csrf'], state=st, media=media_url, user=session.get('user'), nice_date=nice_date)
 
@@ -260,13 +313,15 @@ def setup():
     if users():
         return redirect(url_for('login'))
     if request.method == 'POST':
-        u, p1, p2 = request.form.get('username', '').strip(), request.form.get('password', ''), request.form.get('password2', '')
-        if not u or len(p1) < 8:
+        u, p1, p2 = clip(request.form.get('username'), 40), request.form.get('password', '')[:200], request.form.get('password2', '')[:200]
+        if not re.fullmatch(r'[\w.@-]{2,40}', u) or len(p1) < 8:
             flash('Enter a username and a password of at least 8 characters.', 'error')
         elif p1 != p2:
             flash('The passwords do not match.', 'error')
         else:
             save('users', [dict(user=u, hash=generate_password_hash(p1))], dirty=False)
+            session.clear()
+            session.permanent = True
             session['user'] = u
             flash('Done! Your account has been created.', 'ok')
             return redirect(url_for('dashboard'))
@@ -278,26 +333,31 @@ def login():
     if not users():
         return redirect(url_for('setup'))
     if request.method == 'POST':
-        ip = request.remote_addr or '?'
-        recent = [t for t in FAILS.get(ip, []) if t > time.time() - 900]
-        if len(recent) >= 10:
+        u, p = clip(request.form.get('username'), 40), request.form.get('password', '')[:200]
+        keys = ('ip:' + (request.remote_addr or '?'), 'user:' + u.lower())
+        now = time.time()
+        for k in keys:
+            FAILS[k] = [t for t in FAILS.get(k, []) if t > now - 900]
+        if any(len(FAILS[k]) >= 10 for k in keys):
             flash('Too many attempts. Please wait 15 minutes.', 'error')
             return render_template('login.html'), 429
-        u, p = request.form.get('username', '').strip(), request.form.get('password', '')
         acc = next((x for x in users() if x['user'].lower() == u.lower()), None)
-        if acc and check_password_hash(acc['hash'], p):
-            FAILS.pop(ip, None)
+        ok = check_password_hash(acc['hash'] if acc else DUMMY_HASH, p)
+        if acc and ok:
+            for k in keys:
+                FAILS.pop(k, None)
             session.clear()
+            session.permanent = True
             session['user'] = acc['user']
-            nxt = request.args.get('next', '')
-            return redirect(nxt if nxt.startswith('/admin') else url_for('dashboard'))
-        FAILS[ip] = recent + [time.time()]
+            return redirect(safe_back(request.args.get('next', '')))
+        for k in keys:
+            FAILS[k].append(now)
         time.sleep(1)
         flash('Wrong username or password.', 'error')
     return render_template('login.html')
 
 
-@app.route('/admin/logout')
+@app.route('/admin/logout', methods=['POST'])
 def logout():
     session.clear()
     return redirect(url_for('login'))
@@ -313,15 +373,15 @@ def account():
             me = next(x for x in us if x['user'] == session['user'])
             if not check_password_hash(me['hash'], request.form.get('current', '')):
                 flash('The current password is not correct.', 'error')
-            elif len(request.form.get('new', '')) < 8:
+            elif not 8 <= len(request.form.get('new', '')) <= 200:
                 flash('The new password must be at least 8 characters long.', 'error')
             else:
                 me['hash'] = generate_password_hash(request.form['new'])
                 save('users', us, dirty=False)
                 flash('Password changed.', 'ok')
         elif act == 'add':
-            u, p = request.form.get('username', '').strip(), request.form.get('password', '')
-            if not u or len(p) < 8:
+            u, p = clip(request.form.get('username'), 40), request.form.get('password', '')[:200]
+            if not re.fullmatch(r'[\w.@-]{2,40}', u) or len(p) < 8:
                 flash('Enter a username and a password of at least 8 characters.', 'error')
             elif any(x['user'].lower() == u.lower() for x in us):
                 flash('That username already exists.', 'error')
@@ -384,7 +444,7 @@ def do_publish():
         flash('Website published! The changes are now live.', 'ok')
     except Exception as ex:
         flash(f'Could not publish: {ex}', 'error')
-    return redirect(request.form.get('back') or url_for('dashboard'))
+    return redirect(safe_back(request.form.get('back')))
 
 
 def preview_redirect(page):
@@ -480,9 +540,10 @@ def work_edit(wid=None):
         abort(404)
     if request.method == 'POST':
         f = request.form
-        new = dict(w or {}, title=f.get('title', '').strip(), client=f.get('client', '').strip(), year=f.get('year', '').strip(),
+        year = clip(f.get('year'), 4)
+        new = dict(w or {}, title=clip(f.get('title'), 150), client=clip(f.get('client'), 120), year=year if year.isdigit() else '',
                    category=f.get('category') if f.get('category') in dict(CATEGORIES) else 'creative',
-                   video_url=f.get('video_url', '').strip(), status='published' if f.get('status') == 'published' else 'draft')
+                   video_url=clip(f.get('video_url'), 600), status='published' if f.get('status') == 'published' else 'draft')
         try:
             img = save_image(request.files.get('image'), 'works')
             vid = save_video(request.files.get('video'))
@@ -556,10 +617,12 @@ def news_edit(slug=None):
     cats = sorted({x.get('category', '') for x in items if x.get('category')})
     if request.method == 'POST':
         f = request.form
-        d = f.get('date') or date.today().isoformat()
-        new = dict(n or {}, title=f.get('title', '').strip(), category=f.get('category', '').strip() or 'News', date=d,
-                   fit=f.get('fit') if f.get('fit') in dict(FITS) else 'photo', image_alt=f.get('image_alt', '').strip(),
-                   lead_tag=f.get('lead_tag', '').strip(), excerpt=f.get('excerpt', '').strip(), body=richtext.clean(f.get('body', '')),
+        d = clip(f.get('date'), 10)
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', d):
+            d = date.today().isoformat()
+        new = dict(n or {}, title=clip(f.get('title'), 200), category=clip(f.get('category'), 60) or 'News', date=d,
+                   fit=f.get('fit') if f.get('fit') in dict(FITS) else 'photo', image_alt=clip(f.get('image_alt'), 200),
+                   lead_tag=clip(f.get('lead_tag'), 80), excerpt=clip(f.get('excerpt'), 600), body=richtext.clean(f.get('body', '')[:200000]),
                    status='published' if f.get('status') == 'published' else 'draft')
         try:
             img = save_image(request.files.get('image'), 'news')
@@ -615,10 +678,10 @@ def team_edit(slug=None):
         abort(404)
     if request.method == 'POST':
         f = request.form
-        new = dict(m or {}, name=f.get('name', '').strip(), title=f.get('title', '').strip(),
+        new = dict(m or {}, name=clip(f.get('name'), 80), title=clip(f.get('title'), 100),
                    dept=f.get('dept') if f.get('dept') in dict(DEPTS) else 'auto',
                    langs=[l for l, _ in LANGS if f.get('lang_' + l)], leader=bool(f.get('leader')),
-                   bio={l: richtext.clean(f.get('bio_' + l, '')) for l, _ in LANGS},
+                   bio={l: richtext.clean(f.get('bio_' + l, '')[:50000]) for l, _ in LANGS},
                    status='published' if f.get('status') == 'published' else 'draft')
         try:
             photo = save_image(request.files.get('photo'), 'team', 1400)
@@ -701,8 +764,8 @@ def too_big(_):
 
 
 app.secret_key = secret_key()
-app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax',
-                  SESSION_COOKIE_SECURE=os.environ.get('HMG_HTTPS') == '1')
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax', SESSION_COOKIE_NAME='hmg_session',
+                  SESSION_COOKIE_SECURE=os.environ.get('HMG_HTTPS') == '1', PERMANENT_SESSION_LIFETIME=timedelta(hours=8))
 
 if __name__ == '__main__':
     first_run()
